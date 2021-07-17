@@ -1,5 +1,4 @@
-#include<stdio.h>
-#include "mysql/mysql.h"
+#include"mysqlc.h"
 void my_err(const char *error_string, int line)
 {
     fprintf(stderr, "line:%d",line);
@@ -29,7 +28,6 @@ MYSQL accept_mysql(void)
 		my_err("mysql_set_character_set", __LINE__);
 	}
 	
-	printf("连接mysql数据库成功!\n");
 	return mysql;
 }
 
@@ -48,12 +46,20 @@ int use_mysql(const char *string, MYSQL mysql1)
 		result = mysql_store_result(&mysql);
 		if(result){
 			num_fields = mysql_num_fields(result);
-			row = mysql_fetch_row(result);			
-					if(row[1]){
-						printf("%-20s", row[1]);
+			while((field = mysql_fetch_field(result))){
+				printf("%-20s", field->name);
+			}
+			printf("\n");
+
+			while(row = mysql_fetch_row(result)){
+				for(i = 0; i < num_fields; i++){
+					if(row[i]){
+						printf("%-20s", row[i]);
 					}
 				}
-				printf("\n");		
+				printf("\n");
+			}
+		}
 		mysql_free_result(result);
 	}
 	else{
@@ -70,13 +76,39 @@ int close_mysql(MYSQL mysql)
 	printf("end\n");
 	return 0;
 }
-int main()
+int judge(char name[20],char password[20])
 {
-    MYSQL a;
-    a=accept_mysql();
-	char string[50];
-	char name[10]="man";
-	sprintf(string,"select*from 学生数据 where 帐号=\"%s\"",name);
-    use_mysql(string,a);
-    close_mysql(a);
+    MYSQL mysql;
+    mysql=accept_mysql();
+
+    int                 i;
+	int                 ret;
+	unsigned int        num_fields;
+	MYSQL_RES           *result = NULL;
+	MYSQL_ROW           row;
+	MYSQL_FIELD         *field;
+    char string[50];
+    sprintf(string,"select*from 学生数据 where 帐号=\"%s\"",name);
+	printf("%s\n",string);
+	ret = mysql_query(&mysql, string);
+	printf("%s\n",string);
+	if(!ret){
+		result = mysql_store_result(&mysql);
+		if(result){
+			row = mysql_fetch_row(result);
+			if (strcmp(row[1],password)==0)
+				{
+					close_mysql(mysql);
+					return 1;
+				}
+		}
+		mysql_free_result(result);
+	}
+	else{
+		printf("query fail\n");
+		close_mysql(mysql);
+		return -1;
+	}
+	close_mysql(mysql);
+	return 0;
 }
