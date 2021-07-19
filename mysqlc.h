@@ -9,4 +9,5 @@ MYSQL accept_mysql(void);
 int close_mysql(MYSQL mysql);
 int use_mysql(const char *name,const char *password,MYSQL mysql1);
 int judege(const char *name,const char *password);
+int judegeon(const char *name,const char *password);
 #endif
