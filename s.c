@@ -21,8 +21,41 @@ struct s1 {
 struct work {
     char tye;
     char name[20];
-    char paaword[20];
+    char password[20];
+    int ret;
 };
+void mylogin(struct work s1,struct s1* s)
+{
+    struct work rets;
+     int c=judege(s1.name,s1.password);
+    if (c==1)
+	{
+        rets.ret=1;
+		printf("用户%s登陆成功\n",s1.name);
+	}
+	else if (c==0)
+	{   rets.ret=0;
+			printf("用户%s登陆失败\n",s1.name);
+	}
+	else printf("mysql error\n");
+     send(s->conn_fd,&rets,sizeof(rets),0);
+}
+void mylogon(struct work s1,struct s1* s)
+{
+    struct work rets;
+     int c=judegeon(s1.name,s1.password);
+    if (c==1)
+	{
+        rets.ret=1;
+		printf("用户%s注册成功\n",s1.name);
+	}
+	else if (c==0)
+	{   rets.ret=0;
+			printf("用户%s注册失败\n",s1.name);
+	}
+	else printf("mysql error\n");
+     send(s->conn_fd,&rets,sizeof(rets),0);
+}
 void *solve(void* temp)
 {
     struct work s1;
@@ -30,15 +63,25 @@ void *solve(void* temp)
     struct epoll_event ev;
     struct s1 *s=(struct s1*)temp;
     printf("efd:%d cfd:%d\n",s->epfd,s->conn_fd);
-    int ret = recv(s->conn_fd,&s1,1000,0);
-  //  read(s->conn_fd,buf,sizeof(buf));
-    printf("%s %s",s1.name,s1.paaword);
-    char a='n';
-    if (judge(s1.name,s1.paaword)==1)
+    int ret = recv(s->conn_fd,&s1,sizeof(s1),0);
+    if (ret==0)
     {
-        a='y';
+        epoll_ctl(s->epfd,EPOLL_CTL_DEL,s->conn_fd,NULL);
+        close(s->conn_fd);
+        printf("对端已经关闭了");
+        pthread_exit(0);
     }
-     send(s->conn_fd,&a,1,0);
+  //  read(s->conn_fd,buf,sizeof(buf));
+//    printf("%s %s",s1.name,s1.password);
+    switch(s1.tye)
+    {
+        case 's':
+        mylogin(s1,s);
+        break;
+        case 'a':
+        mylogon(s1,s);
+        break;
+    }
     printf("end\n");
     pthread_exit(0);
     return 0;
@@ -101,12 +144,12 @@ int main()
                 epoll_ctl(epfd,EPOLL_CTL_ADD,conn_fd,&ev);
 
             }
-            else if(events[i].events&EPOLLRDHUP)
-            {
-              
+/*            else if(events[i].events&EPOLLRDHUP)
+            {              
                 epoll_ctl(epfd,EPOLL_CTL_DEL,events[i].data.fd,NULL);
                  printf("shutdown\n");
             }
+*/
             else{
                 temp->epfd=epfd;
                 temp->conn_fd=events[i].data.fd;

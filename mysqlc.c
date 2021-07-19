@@ -31,8 +31,18 @@ MYSQL accept_mysql(void)
 	return mysql;
 }
 
-int use_mysql(const char *string, MYSQL mysql1)
+int close_mysql(MYSQL mysql)
 {
+	mysql_close(&mysql);
+	mysql_library_end();
+	printf("end\n");
+	return 0;
+}
+int use_mysql(const char *name,const char *password,MYSQL mysql1)
+{
+	
+	char string[50];
+	sprintf(string,"select*from 学生数据 where 帐号=\"%s\"",name);
 	int                 i;
 	int                 ret;
 	unsigned int        num_fields;
@@ -46,20 +56,23 @@ int use_mysql(const char *string, MYSQL mysql1)
 		result = mysql_store_result(&mysql);
 		if(result){
 			num_fields = mysql_num_fields(result);
-			while((field = mysql_fetch_field(result))){
-				printf("%-20s", field->name);
+			row = mysql_fetch_row(result);			
+			if (!row)
+			{
+				return 0;
 			}
-			printf("\n");
-
-			while(row = mysql_fetch_row(result)){
-				for(i = 0; i < num_fields; i++){
-					if(row[i]){
-						printf("%-20s", row[i]);
+					if(row[1]){
+						if (strcmp(password,row[1])==0)
+						{
+							return 1;
+						}
+						else {
+							return 0;
+						}
+					//	printf("%-20s", row[1]);
 					}
 				}
-				printf("\n");
-			}
-		}
+				printf("\n");		
 		mysql_free_result(result);
 	}
 	else{
@@ -68,47 +81,19 @@ int use_mysql(const char *string, MYSQL mysql1)
 	}
 	return 0;
 }
-
-int close_mysql(MYSQL mysql)
+int judege(const char *name,const char *password)
 {
-	mysql_close(&mysql);
-	mysql_library_end();
-	printf("end\n");
-	return 0;
+  MYSQL a;
+    a=accept_mysql();
+    int ret=use_mysql(name,password,a);
+    close_mysql(a);
+    return ret;
 }
-int judge(char name[20],char password[20])
+int judegeon(const char *name,const char *password)
 {
-    MYSQL mysql;
-    mysql=accept_mysql();
-
-    int                 i;
-	int                 ret;
-	unsigned int        num_fields;
-	MYSQL_RES           *result = NULL;
-	MYSQL_ROW           row;
-	MYSQL_FIELD         *field;
-    char string[50];
-    sprintf(string,"select*from 学生数据 where 帐号=\"%s\"",name);
-	printf("%s\n",string);
-	ret = mysql_query(&mysql, string);
-	printf("%s\n",string);
-	if(!ret){
-		result = mysql_store_result(&mysql);
-		if(result){
-			row = mysql_fetch_row(result);
-			if (strcmp(row[1],password)==0)
-				{
-					close_mysql(mysql);
-					return 1;
-				}
-		}
-		mysql_free_result(result);
-	}
-	else{
-		printf("query fail\n");
-		close_mysql(mysql);
-		return -1;
-	}
-	close_mysql(mysql);
-	return 0;
+  MYSQL a;
+    a=accept_mysql();
+    int ret=use_mysql(name,password,a);
+    close_mysql(a);
+    return ret;
 }

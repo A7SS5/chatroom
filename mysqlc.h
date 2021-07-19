@@ -6,7 +6,7 @@
 #include <mysql/mysql.h>
 void my_err(const char *error_string, int line);
 MYSQL accept_mysql(void);
-int use_mysql(const char *string, MYSQL mysql1);
 int close_mysql(MYSQL mysql);
-int judge(char name[20],char password[20]);
+int use_mysql(const char *name,const char *password,MYSQL mysql1);
+int judege(const char *name,const char *password);
 #endif
