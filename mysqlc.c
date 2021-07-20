@@ -81,6 +81,49 @@ int use_mysql(const char *name,const char *password,MYSQL mysql1)
 	}
 	return 0;
 }
+int use_mysql_1(const char *name,const char *password,MYSQL mysql1) //注册，先看有没有，再插入
+{
+	
+	char string[50];
+	char string1[100];
+	sprintf(string,"select*from 学生数据 where 帐号=\"%s\"",name);
+	sprintf(string1,"insert into 学生数据 values(\"%s\",\"%s\")",name,password);
+	int                 i;
+	int                 ret;
+	unsigned int        num_fields;
+	MYSQL               mysql = mysql1;
+	MYSQL_RES           *result = NULL;
+	MYSQL_ROW           row;
+	MYSQL_FIELD         *field;
+	int ret1;
+	printf("%s\n",string1);
+	ret = mysql_query(&mysql, string);
+	if(!ret){
+		result = mysql_store_result(&mysql);
+		if(result){
+			row = mysql_fetch_row(result);			
+					if (!row)
+					{
+						ret1=mysql_query(&mysql,string1);
+						if (!ret1)
+						{
+							return 1;
+						}
+						else return 0;
+					}
+					else{
+						return 0;
+					}
+				}
+				printf("sa\n");		
+		mysql_free_result(result);
+	}
+	else{
+		printf("query fail\n");
+		return -1;
+	}
+	return 0;
+}
 int judege(const char *name,const char *password)
 {
   MYSQL a;
@@ -93,7 +136,7 @@ int judegeon(const char *name,const char *password)
 {
   MYSQL a;
     a=accept_mysql();
-    int ret=use_mysql(name,password,a);
+    int ret=use_mysql_1(name,password,a);
     close_mysql(a);
     return ret;
 }

@@ -36,7 +36,18 @@ struct work {
     char password[20];
     int ret;
 };
-int logon(struct work temp,int cfd);
+int logon(struct work temp,int cfd)
+{
+    struct work s1;
+    temp.tye='b';
+    send(cfd,&temp,sizeof(temp),0);
+    recv(cfd,&s1,sizeof(s1),0);
+    printf("ret :%d",s1.ret);
+    if (s1.ret==0)
+    return 0;
+    else if (s1.ret==1)
+    return 1;
+}
 int login(struct work temp,int cfd)
 {
     struct work s1;
@@ -144,21 +155,9 @@ int SysLogin(int efd)  // SL界面
     }
         return 1;
 }
-int logon(struct work temp,int cfd)
-{
-   struct work s1;
-    temp.tye='a';
-    send(cfd,&temp,sizeof(temp),0);
-    recv(cfd,&s1,sizeof(s1),0);
-    printf("ret :%d",s1.ret);
-    if (s1.ret==0)
-    return 0;
-    else if (s1.ret==1)
-    return 1;
-}
 int SysLogon(int efd)
 {
-        struct work test={'a',"",""};
+        struct work test={'b',"",""};
     int j = 0;
     char n;
     char c;
@@ -216,7 +215,7 @@ int SysLogon(int efd)
         printf("\n");
         strcpy(test.name,usrname);
         strcpy(test.password,password);
-        if (login(test,efd) == 0)
+        if (logon(test,efd) == 0)
         {
             printf("用户已存在或密码错误\n");
             printf("输入'0'来返回上层界面或'1'来继续尝试注册\n");
@@ -286,8 +285,7 @@ int main()
         case '2':
        if ((ret=SysLogon(cfd)))
         {
-            break;
-            sleep(10);
+            sleep(5);
         }
         break;
         case '3':

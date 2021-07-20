@@ -78,7 +78,7 @@ void *solve(void* temp)
         case 's':
         mylogin(s1,s);
         break;
-        case 'a':
+        case 'b':
         mylogon(s1,s);
         break;
     }
