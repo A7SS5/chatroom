@@ -1,4 +1,5 @@
 #include"mysqlc.h"
+#include"List.h"
 void my_err(const char *error_string, int line)
 {
     fprintf(stderr, "line:%d",line);
@@ -42,7 +43,7 @@ int use_mysql(const char *name,const char *password,MYSQL mysql1)
 {
 	
 	char string[50];
-	sprintf(string,"select*from 学生数据 where 帐号=\"%s\"",name);
+	sprintf(string,"select*from 用户数据 where 用户名=\"%s\"",name);
 	int                 i;
 	int                 ret;
 	unsigned int        num_fields;
@@ -61,8 +62,8 @@ int use_mysql(const char *name,const char *password,MYSQL mysql1)
 			{
 				return 0;
 			}
-					if(row[1]){
-						if (strcmp(password,row[1])==0)
+					if(row[2]){
+						if (strcmp(password,row[2])==0)
 						{
 							return 1;
 						}
@@ -86,8 +87,8 @@ int use_mysql_1(const char *name,const char *password,MYSQL mysql1) //注册，�
 	
 	char string[50];
 	char string1[100];
-	sprintf(string,"select*from 学生数据 where 帐号=\"%s\"",name);
-	sprintf(string1,"insert into 学生数据 values(\"%s\",\"%s\")",name,password);
+	sprintf(string,"select*from 用户数据 where 用户名=\"%s\"",name);
+	sprintf(string1,"insert into 用户数据 values(NULL,\"%s\",\"%s\")",name,password);
 	int                 i;
 	int                 ret;
 	unsigned int        num_fields;
@@ -124,6 +125,39 @@ int use_mysql_1(const char *name,const char *password,MYSQL mysql1) //注册，�
 	}
 	return 0;
 }
+int use_mysql_2(const char *name,MYSQL mysql1)
+{
+	char string[50];
+	sprintf(string,"select uid from 用户数据 where 用户名=\"%s\"",name);
+	int                 ret;
+	unsigned int        num_fields;
+	MYSQL               mysql = mysql1;
+	MYSQL_RES           *result = NULL;
+	MYSQL_ROW           row;
+	MYSQL_FIELD         *field;
+	mysql_query(&mysql,"use etc");
+	//printf("%s\n",string);
+	ret = mysql_query(&mysql, string);
+	if(!ret){
+		result = mysql_store_result(&mysql);
+		if(result){
+			num_fields = mysql_num_fields(result);
+			if (!(row = mysql_fetch_row(result)))
+			{
+				return 0;
+			}
+			return atoi(row[0]);
+					
+				}
+				printf("\n");
+		mysql_free_result(result);
+	}
+	else{
+		printf("query fail\n");
+		return -1;
+	}
+	return 0;
+}
 int judege(const char *name,const char *password)
 {
   MYSQL a;
@@ -137,6 +171,14 @@ int judegeon(const char *name,const char *password)
   MYSQL a;
     a=accept_mysql();
     int ret=use_mysql_1(name,password,a);
+    close_mysql(a);
+    return ret;
+}
+int find_byname(const char*name)
+{
+	 MYSQL a;
+    a=accept_mysql();
+    int ret=use_mysql_2(name,a);
     close_mysql(a);
     return ret;
 }

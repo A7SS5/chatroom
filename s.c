@@ -3,6 +3,7 @@
 #include <string.h>  
 #include <stdio.h>
 #include <stdlib.h>
+#include"List.h"
 #include <unistd.h>
 #include <errno.h>
 #include <sys/socket.h>
@@ -15,6 +16,18 @@
 #define EVENTS_MAX_SIZE 20
 #define SERV_PORT 9000
 #define MAX_CONTECT_SIZE 20
+typedef struct {
+    int id;
+    char name[20];
+    int fd;
+}peple;
+typedef struct people_node
+{
+    peple data;
+    struct people_node*prev;
+    struct people_node*next;
+}people_node_t, *people_list_t;
+people_list_t list=NULL;
 struct s1 {
     int epfd,conn_fd;
 };
@@ -30,6 +43,29 @@ void mylogin(struct work s1,struct s1* s)
      int c=judege(s1.name,s1.password);
     if (c==1)
 	{
+    
+
+
+
+    people_node_t *new=NULL;
+    new=(people_node_t*)malloc(sizeof(people_node_t));
+    peple a;
+     new->data.id=find_byname(s1.name);
+    strcpy(new->data.name,s1.name);
+    new->data.fd=s->conn_fd;
+    people_node_t *p;
+    List_ForEach(list,p)
+    {
+        printf("id:%d name:%s fd:%d\n",p->data.id,p->data.name,p->data.fd);
+            if (p->data.id==new->data.id)
+            {
+                rets.ret=-1;
+             send(s->conn_fd,&rets,sizeof(rets),0);
+             return;
+            }
+    }
+
+     List_AddTail(list,new);
         rets.ret=1;
 		printf("用户%s登陆成功\n",s1.name);
 	}
@@ -66,6 +102,13 @@ void *solve(void* temp)
     int ret = recv(s->conn_fd,&s1,sizeof(s1),0);
     if (ret==0)
     {
+        people_node_t* p;
+        List_ForEach(list,p)
+        {
+            if (p->data.fd==s->conn_fd)
+             {List_FreeNode(p);
+            break;}
+        }
         epoll_ctl(s->epfd,EPOLL_CTL_DEL,s->conn_fd,NULL);
         close(s->conn_fd);
         printf("对端已经关闭了");
@@ -88,6 +131,7 @@ void *solve(void* temp)
 }
 int main()
 {
+    List_Init(list,people_node_t);
     struct sockaddr_in cliaddr,servaddr;
     socklen_t cliaddr_len;
     struct s1* temp;

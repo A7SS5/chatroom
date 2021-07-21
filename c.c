@@ -59,6 +59,8 @@ int login(struct work temp,int cfd)
     return 0;
     else if (s1.ret==1)
     return 1;
+    else if (s1.ret==-1)
+    return -1;
 }
 int SysLogin(int efd)  // SL界面
 {
@@ -122,7 +124,8 @@ int SysLogin(int efd)  // SL界面
         printf("\n");
         strcpy(test.name,usrname);
         strcpy(test.password,password);
-        if (login(test,efd) == 0)
+        int ccc;
+        if ((ccc=login(test,efd))==0)
         {
             printf("用户不存在或密码错误\n");
             printf("输入'0'来返回上层界面或'1'来继续尝试登陆\n");
@@ -146,6 +149,11 @@ int SysLogin(int efd)  // SL界面
                 printf("错误次数过多\n");
                 return 0;
             }
+        }
+        else if (ccc==-1)
+        {
+            printf("该用户已经登陆！\n");
+            return 0;
         }
         else
         {
@@ -257,9 +265,10 @@ int main()
     inet_pton(AF_INET,SERVER_ADDR,&saddr.sin_addr.s_addr);
     saddr.sin_port = htons(SERVER_PORT);
  
-    if ((connect(cfd,(struct sockaddr*)&saddr,sizeof(saddr)))!=0)
+    while ((connect(cfd,(struct sockaddr*)&saddr,sizeof(saddr)))!=0)
     {
-        printf ("connect error\n");
+        printf ("服务器未响应...........\n");
+        sleep(3);
     }
     int t=5;
     struct work test={'a',"",""};
@@ -278,15 +287,12 @@ int main()
         case '1':
         if ((ret=SysLogin(cfd)))
         {
-            break;
             sleep(10);
+            break;
         }
         break;
         case '2':
-       if ((ret=SysLogon(cfd)))
-        {
-            sleep(5);
-        }
+        SysLogon(cfd);
         break;
         case '3':
         close(cfd);
@@ -295,8 +301,6 @@ int main()
         default:
         printf("%c不是一个合法选项\n",op);
         }
-        if (ret==1)
-        break;
     }
     close(cfd);
  
