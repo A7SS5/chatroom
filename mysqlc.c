@@ -1,5 +1,7 @@
 #include"mysqlc.h"
 #include"List.h"
+
+extern people_list_t list;
 void my_err(const char *error_string, int line)
 {
     fprintf(stderr, "line:%d",line);
@@ -34,7 +36,13 @@ MYSQL accept_mysql(void)
 
 int getstatus(int id)
 {
-
+	people_node_t* p;
+	List_ForEach(list,p)
+	{
+		if (p->data.id==id)
+		return 1;
+	}
+	return 0;
 }
 int close_mysql(MYSQL mysql)
 {

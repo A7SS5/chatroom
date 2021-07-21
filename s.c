@@ -16,28 +16,7 @@
 #define EVENTS_MAX_SIZE 20
 #define SERV_PORT 9000
 #define MAX_CONTECT_SIZE 20
-typedef struct {
-    int id;
-    char name[20];
-    int fd;
-}peple;
-typedef struct people_node
-{
-    peple data;
-    struct people_node*prev;
-    struct people_node*next;
-}people_node_t, *people_list_t;
 people_list_t list=NULL;
-struct s1 {
-    int epfd,conn_fd;
-};
-struct work {
-    char tye;
-    int sid;
-    char name[20];
-    char password[20];
-    int ret;
-};
 void mylogin(struct work s1,struct s1* s)
 {
     struct work rets;
