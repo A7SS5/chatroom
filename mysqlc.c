@@ -1,6 +1,4 @@
 #include"mysqlc.h"
-#include"List.h"
-
 extern people_list_t list;
 void my_err(const char *error_string, int line)
 {
@@ -33,14 +31,27 @@ MYSQL accept_mysql(void)
 	
 	return mysql;
 }
-
+int getcfd(int id)
+{
+	people_node_t* p;
+	List_ForEach(list,p)
+	{
+		if (p->data.id==id)
+		{
+		return p->data.fd;
+		}
+	}
+	return 0;
+}
 int getstatus(int id)
 {
 	people_node_t* p;
 	List_ForEach(list,p)
 	{
 		if (p->data.id==id)
+		{
 		return 1;
+		}
 	}
 	return 0;
 }
@@ -99,27 +110,37 @@ int use_mysql_3(int id,MYSQL mysql1)
 		
 	char string[120];
 	sprintf(string,"select uid,用户名 FROM 用户数据,friend WHERE friend.sid=%d AND 用户数据.uid=friend.rid ORDER BY uid",id);
+	printf("%s\n",string);
 	int                 i;
 	int                 ret;
-	unsigned int        num_fields;
+	unsigned int        num_rows;
 	MYSQL               mysql = mysql1;
 	MYSQL_RES           *result = NULL;
 	MYSQL_ROW           row;
-	MYSQL_FIELD         *field;
-
+	struct work temp={'c',0,0,"","",0};
+	
+//	mysql_query(&mysql,"use etc");
 	ret = mysql_query(&mysql, string);
 	if(!ret){
 		result = mysql_store_result(&mysql);
 		if(result){
-			num_fields = mysql_num_fields(result);
-			row = mysql_fetch_row(result);			
-			if (!row)
-			{
-				return 0;
-			}
-				
+			num_rows = mysql_num_rows(result);
+			
+				int i=0;
+				int send_fd;
 
-
+					while((row = mysql_fetch_row(result))){
+					temp.rid=atoi(row[0]);
+					strcpy(temp.name,row[1]);
+					temp.ret=getstatus(temp.rid);
+					send_fd=getcfd(id);
+					printf("%-20d%-20s%-20d%-20d\n",temp.rid,temp.name,temp.ret,send_fd);
+					send(send_fd,&temp,sizeof(temp),0);
+					i++;
+					}
+					temp.rid=0;
+					send(send_fd,&temp,sizeof(temp),0);
+					printf("%-20d%-20s%-20d%-20d\n",temp.rid,temp.name,temp.ret,send_fd);
 				}
 				printf("\n");		
 		mysql_free_result(result);
@@ -224,7 +245,7 @@ int judegeon(const char *name,const char *password)
 }
 void getmyfriend(int id)
 {
-		 MYSQL a;
+	MYSQL a;
     a=accept_mysql();
 	int ret;
     ret=use_mysql_3(id,a);

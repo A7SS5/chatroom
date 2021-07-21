@@ -3,12 +3,14 @@
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <pthread.h>
 #include <strings.h>
 #include <string.h>
+#include "List.h"
 #include <ctype.h>
-#include<stdlib.h>
-#include    <assert.h>
- #include <termio.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <termio.h>
  int myid;
 int getch()
 {
@@ -32,14 +34,89 @@ int getch()
 #define SERVER_ADDR     "127.0.0.1"
 #define SERVER_PORT     9000
  
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+
+typedef struct {
+    int id;
+    char name[20];
+    int status;
+}peple;
+typedef struct people_node
+{
+    peple data;
+    struct people_node*prev;
+    struct people_node*next;
+}people_node_t, *people_list_t;
+people_list_t list=NULL;
 struct work {
     char tye;
     int sid;
+    int rid;
     char name[20];
     char password[20];
     int ret;
     
 };
+void *ralt(void* temp)
+{
+    int i=0;
+    int cfd=*(int *)temp;
+    struct work s1;
+    people_node_t *new=NULL;
+    while(1)
+    {
+        recv(cfd,&s1,sizeof(struct work),0);
+        switch (s1.tye)
+        {
+        case 'c':
+            if (s1.rid==0)
+            {
+                i=0;
+                pthread_mutex_unlock(&mutex);
+                printf("runlocked\n");
+                break;
+            }
+                if (i==0)
+                pthread_mutex_lock(&mutex);
+                i++;
+                printf("locked\n");
+                new=(people_node_t*)malloc(sizeof(people_node_t));
+                new->data.id=s1.rid;
+                strcpy(new->data.name,s1.name);
+                new->data.status=s1.ret;
+  //              printf("%-20d%-20s%-20d\n",s1.rid,s1.name,s1.ret);
+                List_AddTail(list,new);
+                
+        break;
+        default:
+            break;
+        }
+    }
+}
+void fetchallfriend(int cfd)
+{
+    struct work temp={'c',0,0,"","",0};
+    temp.sid=myid;
+    send(cfd,&temp,sizeof(struct work),0);
+    printf("I'm waiting for data now\n");
+    sleep(3);
+    pthread_mutex_lock(&mutex);
+    people_node_t *p;
+    printf("i got locked");
+    printf("%-20s%-20s%-20s\n","id","用户名","在线状态");
+    List_ForEach(list,p)
+    {
+          printf("%-20d%-20s",p->data.id,p->data.name);
+          if (p->data.status==1)
+          printf("%-20s","在线");
+          else printf("%-20s","不在线");
+          printf("\n");
+    }
+    pthread_mutex_unlock(&mutex);
+    printf("i'm unlocked now\n");
+    
+}
 int logon(struct work temp,int cfd)
 {
     struct work s1;
@@ -71,7 +148,7 @@ int login(struct work temp,int cfd)
 }
 int SysLogin(int efd)  // SL界面
 {
-    struct work test={'a',0,"","",0};
+    struct work test={'a',0,0,"","",0};
     int i = 0;
     int j = 0;
     char n;
@@ -172,7 +249,7 @@ int SysLogin(int efd)  // SL界面
 }
 int SysLogon(int efd)
 {
-        struct work test={'b',0,"","",0};
+        struct work test={'b',0,0,"","",0};
     int j = 0;
     char n;
     char c;
@@ -260,6 +337,7 @@ int SysLogon(int efd)
 }
 int main()
 {
+    List_Init(list,struct people_node);
     int cfd = 0;
     struct sockaddr_in saddr;
     char buf[BUFSIZ] = {0};
@@ -278,7 +356,7 @@ int main()
         sleep(3);
     }
     int t=5;
-    struct work test={'a',0,"","",0};
+    struct work test={'a',0,0,"","",0};
     char op;
     int ret;
     printf("欢迎使用大鹏聊天室\n");
@@ -311,9 +389,12 @@ int main()
             break;
         }
     }
+    pthread_t pid1;
+    int status;
+    pthread_create(&pid1,NULL,ralt,&cfd);
     while(1)
     {
-        system("clear");
+     //   system("clear");
         printf("欢迎使用大鹏聊天室\n");
         printf("输入'1'来查看好友列表(状态)\n");
         printf("输入'2'来开启一个私聊(输入id号)\n");
@@ -327,6 +408,7 @@ int main()
         switch (op)
         {
         case '1':
+            fetchallfriend(cfd);
         break;
         case '2':
         break;

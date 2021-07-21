@@ -1,8 +1,20 @@
 #ifndef MYSQLC_H_
 #define MYSQLC_H_
-#include<stdio.h>
-#include<string.h>
-#include<stdlib.h>
+
+#include <netinet/in.h>   
+#include <arpa/inet.h>
+#include <string.h>  
+#include <stdio.h>
+#include <stdlib.h>
+#include"List.h"
+#include <unistd.h>
+#include <errno.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <fcntl.h>
+#include <sys/epoll.h>
+#include <pthread.h>
+
 #include <mysql/mysql.h>
 struct s1 {
     int epfd,conn_fd;
@@ -10,6 +22,7 @@ struct s1 {
 struct work {
     char tye;
     int sid;
+    int rid;
     char name[20];
     char password[20];
     int ret;
@@ -35,5 +48,6 @@ int judege(const char *name,const char *password);
 int judegeon(const char *name,const char *password);
 void getmyfriend(int id);
 int getstatus(int id);
+int getcfd(int id);
 int find_byname(const char*name);
 #endif

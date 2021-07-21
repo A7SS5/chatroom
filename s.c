@@ -1,17 +1,3 @@
-#include <netinet/in.h>   
-#include <arpa/inet.h>
-#include <string.h>  
-#include <stdio.h>
-#include <stdlib.h>
-#include"List.h"
-#include <unistd.h>
-#include <errno.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <fcntl.h>
-#include <sys/epoll.h>
-#include <string.h>
-#include <pthread.h>
 #include "mysqlc.h"
 #define EVENTS_MAX_SIZE 20
 #define SERV_PORT 9000
@@ -107,6 +93,8 @@ void *solve(void* temp)
         break;
         case 'c':
         getmyfriend(s1.sid);
+        break;
+        case 'e':
         break;
     }
     printf("end\n");
