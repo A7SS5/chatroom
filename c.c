@@ -56,6 +56,7 @@ struct work {
     char name[20];
     char password[20];
     int ret;
+    char mes[1000];
     
 };
 void *ralt(void* temp)
@@ -335,6 +336,34 @@ int SysLogon(int efd)
     }
         return 1;
 }
+void managefriend()
+{
+    while(1)
+    {
+        char a;
+        printf("输入'1'来添加一个好友\n");
+        printf("输入'2'来删除一个好友\n");
+        printf("输入'3'来查看验证消息\n");
+        printf("输入'4'来返回上层界面\n");
+        fflush(stdin);
+        scanf("%c",&a);
+        while(getchar()!='\n');
+        switch(a)
+        {
+            case '1':
+            break;
+            case '2':
+            break;
+            case '3':
+            break;
+            case '4':
+            break;
+            default:
+            printf("不是一个合法选项请重新输入\n");
+            break;
+        }
+    }
+}
 int main()
 {
     List_Init(list,struct people_node);
@@ -415,6 +444,7 @@ int main()
         case '3':
         break;
         case '4':
+        managefriend();
         break;
         case '5':
         break;
