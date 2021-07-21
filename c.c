@@ -6,8 +6,10 @@
 #include <strings.h>
 #include <string.h>
 #include <ctype.h>
+#include<stdlib.h>
 #include    <assert.h>
  #include <termio.h>
+ int myid;
 int getch()
 {
    int c = 0;
@@ -32,9 +34,11 @@ int getch()
  
 struct work {
     char tye;
+    int sid;
     char name[20];
     char password[20];
     int ret;
+    
 };
 int logon(struct work temp,int cfd)
 {
@@ -58,13 +62,16 @@ int login(struct work temp,int cfd)
     if (s1.ret==0)
     return 0;
     else if (s1.ret==1)
+    {
+    myid=s1.sid;
     return 1;
+    }
     else if (s1.ret==-1)
     return -1;
 }
 int SysLogin(int efd)  // SL界面
 {
-    struct work test={'a',"",""};
+    struct work test={'a',0,"","",0};
     int i = 0;
     int j = 0;
     char n;
@@ -157,7 +164,7 @@ int SysLogin(int efd)  // SL界面
         }
         else
         {
-            printf("Welcome!%s\n", usrname);
+            printf("Welcome!id:%d %s\n", myid,usrname);
             break;
         }
     }
@@ -165,7 +172,7 @@ int SysLogin(int efd)  // SL界面
 }
 int SysLogon(int efd)
 {
-        struct work test={'b',"",""};
+        struct work test={'b',0,"","",0};
     int j = 0;
     char n;
     char c;
@@ -271,25 +278,23 @@ int main()
         sleep(3);
     }
     int t=5;
-    struct work test={'a',"",""};
+    struct work test={'a',0,"","",0};
     char op;
     int ret;
     printf("欢迎使用大鹏聊天室\n");
     while(1)
     {
+        system("clear");
+        ret=0;
         printf("输入'1'来登陆一个已注册帐号\n");
         printf("输入'2'来注册一个帐号\n");
         printf("输入'3'退出本聊天室\n");
         fflush(stdin);
         scanf("%c",&op);
-        getchar();
+        while(getchar()!='\n');
         switch(op){
         case '1':
-        if ((ret=SysLogin(cfd)))
-        {
-            sleep(10);
-            break;
-        }
+        ret=SysLogin(cfd);
         break;
         case '2':
         SysLogon(cfd);
@@ -300,6 +305,40 @@ int main()
         break;
         default:
         printf("%c不是一个合法选项\n",op);
+        }
+        if (ret==1)
+        {
+            break;
+        }
+    }
+    while(1)
+    {
+        system("clear");
+        printf("欢迎使用大鹏聊天室\n");
+        printf("输入'1'来查看好友列表(状态)\n");
+        printf("输入'2'来开启一个私聊(输入id号)\n");
+        printf("输入'3'来查看消息记录\n");
+        printf("输入'4'来管理好友\n");
+        printf("输入'5'来退出\n");
+        
+        fflush(stdin);
+        scanf("%c",&op);
+        while(getchar()!='\n');
+        switch (op)
+        {
+        case '1':
+        break;
+        case '2':
+        break;
+        case '3':
+        break;
+        case '4':
+        break;
+        case '5':
+        break;
+        default:
+            printf("不是一个合法的选择,请重新输入\n");
+            break;
         }
     }
     close(cfd);

@@ -33,6 +33,7 @@ struct s1 {
 };
 struct work {
     char tye;
+    int sid;
     char name[20];
     char password[20];
     int ret;
@@ -53,6 +54,7 @@ void mylogin(struct work s1,struct s1* s)
      new->data.id=find_byname(s1.name);
     strcpy(new->data.name,s1.name);
     new->data.fd=s->conn_fd;
+    rets.sid=new->data.id;
     people_node_t *p;
     List_ForEach(list,p)
     {
@@ -123,6 +125,9 @@ void *solve(void* temp)
         break;
         case 'b':
         mylogon(s1,s);
+        break;
+        case 'c':
+        getmyfriend(s1.sid);
         break;
     }
     printf("end\n");
