@@ -96,6 +96,16 @@ void *solve(void* temp)
         break;
         case 'e':
         break;
+        case 'd':
+        printf("id:%d 是 %d\n",s1.rid,ishe(s1.rid,s));
+        break;
+        case 'f':
+        printf("jia\n");
+        add_friends(s1);
+        break;
+        case 'g':
+        getmyrequst(s1.sid);
+        break;
     }
     printf("end\n");
     pthread_exit(0);

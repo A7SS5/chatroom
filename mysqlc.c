@@ -31,7 +31,19 @@ MYSQL accept_mysql(void)
 	
 	return mysql;
 }
-int getcfd(int id)
+char* getname(int id)
+{
+	people_node_t* p;
+	List_ForEach(list,p)
+	{
+		if (p->data.id==id)
+		{
+		return p->data.name;
+		}
+	}
+	return NULL;
+}
+int getcfd(int id) //遍历链表查找在线人的fd
 {
 	people_node_t* p;
 	List_ForEach(list,p)
@@ -43,7 +55,7 @@ int getcfd(int id)
 	}
 	return 0;
 }
-int getstatus(int id)
+int getstatus(int id)  //遍历链表并查找在线状态
 {
 	people_node_t* p;
 	List_ForEach(list,p)
@@ -105,6 +117,82 @@ int use_mysql(const char *name,const char *password,MYSQL mysql1)
 	}
 	return 0;
 }
+int use_mysql_4(int id,MYSQL mysql1)
+{
+	char string[50];
+	sprintf(string,"select uid from 用户数据 where uid=%d;",id);
+	int ret;
+	MYSQL mysql=mysql1;
+	MYSQL_RES *result=NULL;
+	MYSQL_ROW row;
+	ret=mysql_query(&mysql,string);
+	if (!ret)
+	{
+		result = mysql_store_result(&mysql);
+		if(result){
+			if ((row=mysql_fetch_row(result)))
+			{
+				return 1;
+			}
+
+		}
+		mysql_free_result(result);
+	}
+	else{
+		printf("query fail\n");
+		return -1;
+	}
+	return 0;
+
+}
+int use_mysql_5(struct work temp,MYSQL mysql1)
+{
+	char string[50];
+	sprintf(string,"insert into requst values(0,%d,%d,1)",temp.sid,temp.rid);
+	MYSQL mysql=mysql1;
+	MYSQL_RES *result=NULL;
+	MYSQL_ROW row;
+	int ret;
+	ret=mysql_query(&mysql,string);
+	if (!ret)
+	{
+		return 1;
+	}
+	else{
+		printf("query error\n");
+		return -1;
+	}
+
+}
+char* use_mysql_7(int id,MYSQL mysql1)
+{
+	char string[50];
+	sprintf(string,"select 用户名 from 用户数据 where uid=%d;",id);
+	int ret;
+	MYSQL mysql=mysql1;
+	MYSQL_RES *result=NULL;
+	MYSQL_ROW row;
+	ret=mysql_query(&mysql,string);
+	if (!ret)
+	{
+		result = mysql_store_result(&mysql);
+		if(result){
+			if ((row=mysql_fetch_row(result)))
+			{
+
+				return row[0];
+			}
+
+		}
+		mysql_free_result(result);
+	}
+	else{
+		printf("query fail\n");
+		return NULL;
+	}
+	return NULL;
+
+}
 int use_mysql_3(int id,MYSQL mysql1)
 {
 		
@@ -134,13 +222,55 @@ int use_mysql_3(int id,MYSQL mysql1)
 					strcpy(temp.name,row[1]);
 					temp.ret=getstatus(temp.rid);
 					send_fd=getcfd(id);
-					printf("%-20d%-20s%-20d%-20d\n",temp.rid,temp.name,temp.ret,send_fd);
 					send(send_fd,&temp,sizeof(temp),0);
 					i++;
 					}
 					temp.rid=0;
 					send(send_fd,&temp,sizeof(temp),0);
-					printf("%-20d%-20s%-20d%-20d\n",temp.rid,temp.name,temp.ret,send_fd);
+				}
+				printf("\n");		
+		mysql_free_result(result);
+	}
+	else{
+		printf("query fail\n");
+		return -1;
+	}
+	return 0;
+}
+int use_mysql_6(int id,MYSQL mysql1)
+{
+		
+	char string[150];
+	sprintf(string,"select distinct sid,rid,type,用户数据.用户名 from requst,用户数据 where rid=%d and sid=uid;",id);
+	int                 ret;
+	unsigned int        num_rows;
+	unsigned int        num_feids;
+	MYSQL               mysql = mysql1;
+	MYSQL_RES           *result = NULL;
+	MYSQL_ROW           row;
+	struct work temp={'g',0,0,"","",0};
+	
+//	mysql_query(&mysql,"use etc");
+	ret = mysql_query(&mysql, string);
+	if(!ret){
+		result = mysql_store_result(&mysql);
+		if(result){
+			num_rows = mysql_num_rows(result);
+			num_feids=mysql_num_fields(result);
+				printf("%s and %d\n",string,num_feids);
+				int send_fd;
+
+					while((row = mysql_fetch_row(result))){
+					temp.rid=atoi(row[0]);
+					temp.ret=atoi(row[2]);
+					strcpy(temp.name,row[3]);
+					printf("sad:%s\n",temp.name);
+					temp.sid=1;
+					send_fd=getcfd(id);
+					send(send_fd,&temp,sizeof(temp),0);
+					}
+					temp.sid=0;
+					send(send_fd,&temp,sizeof(temp),0);
 				}
 				printf("\n");		
 		mysql_free_result(result);
@@ -164,7 +294,6 @@ int use_mysql_1(const char *name,const char *password,MYSQL mysql1) //注册，�
 	MYSQL               mysql = mysql1;
 	MYSQL_RES           *result = NULL;
 	MYSQL_ROW           row;
-	MYSQL_FIELD         *field;
 	int ret1;
 	printf("%s\n",string1);
 	ret = mysql_query(&mysql, string);
@@ -243,7 +372,7 @@ int judegeon(const char *name,const char *password)
     close_mysql(a);
     return ret;
 }
-void getmyfriend(int id)
+void getmyfriend(int id) //查找所有好友并返回
 {
 	MYSQL a;
     a=accept_mysql();
@@ -251,11 +380,56 @@ void getmyfriend(int id)
     ret=use_mysql_3(id,a);
     close_mysql(a);
 }
-int find_byname(const char*name)
+void getmyrequst(int id)
+{
+	MYSQL a;
+    a=accept_mysql();
+	int ret;
+    ret=use_mysql_6(id,a);
+    close_mysql(a);
+}
+char *yourname(int id)
+{
+	MYSQL a;
+	char *c;
+    a=accept_mysql();
+    c=use_mysql_7(id,a);
+    close_mysql(a);
+	return c;
+}
+int find_byname(const char*name) //通过用户名查找id
 {
 	 MYSQL a;
     a=accept_mysql();
     int ret=use_mysql_2(name,a);
     close_mysql(a);
+    return ret;
+}
+void add_friends(struct work temp) //储存加好友信息
+{
+	MYSQL a;
+    a=accept_mysql();
+	int ret;
+	struct work test;
+    ret=use_mysql_5(temp,a);
+	if (getstatus(temp.rid))
+	{
+		int cfd=getcfd(temp.rid);
+		printf("cfd:%d",cfd);
+		strcpy(temp.name,getname(temp.sid));
+		send(cfd,&temp,sizeof(temp),0);
+	}
+    close_mysql(a);
+}
+int ishe(int id,struct s1 *s) //判断是否存在id
+{
+	MYSQL a;
+    a=accept_mysql();
+    int ret=use_mysql_4(id,a);
+    close_mysql(a);
+	struct work ss;
+	ss.tye='d';
+	ss.ret=ret;
+	send(s->conn_fd,&ss,sizeof(ss),0);
     return ret;
 }
