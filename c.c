@@ -75,13 +75,11 @@ void *ralt(void* temp)
             {
                 i=0;
                 pthread_mutex_unlock(&mutex);
-                printf("runlocked\n");
                 break;
             }
                 if (i==0)
                 pthread_mutex_lock(&mutex);
                 i++;
-                printf("locked\n");
                 new=(people_node_t*)malloc(sizeof(people_node_t));
                 new->data.id=s1.rid;
                 strcpy(new->data.name,s1.name);
@@ -97,25 +95,51 @@ void *ralt(void* temp)
 }
 void fetchallfriend(int cfd)
 {
-    struct work temp={'c',0,0,"","",0};
-    temp.sid=myid;
-    send(cfd,&temp,sizeof(struct work),0);
-    printf("I'm waiting for data now\n");
-    sleep(3);
-    pthread_mutex_lock(&mutex);
-    people_node_t *p;
-    printf("i got locked");
-    printf("%-20s%-20s%-20s\n","id","用户名","在线状态");
-    List_ForEach(list,p)
+     char a;
+     int simple=0;
+    while(1)
     {
-          printf("%-20d%-20s",p->data.id,p->data.name);
-          if (p->data.status==1)
-          printf("%-20s","在线");
-          else printf("%-20s","不在线");
-          printf("\n");
+        system("clear");
+        List_Free(list,people_node_t);
+        struct work temp={'c',0,0,"","",0};
+        temp.sid=myid;
+        send(cfd,&temp,sizeof(struct work),0);
+        printf("I'm waiting for data now\n");
+        sleep(2);
+        pthread_mutex_lock(&mutex);
+        people_node_t *p;
+        printf("%-20s%-20s%-20s\n","id","用户名","在线状态");
+        List_ForEach(list,p)
+        {
+            printf("%-20d%-20s",p->data.id,p->data.name);
+            if (p->data.status==1)
+            printf("%-20s","在线");
+            else printf("%-20s","不在线");
+            printf("\n");
+        }
+        pthread_mutex_unlock(&mutex);
+       
+        printf("输入'1'来刷新状态\n");
+        printf("输入'2'来退出查看\n");
+        getfriend1:
+        fflush(stdin);
+        scanf("%c",&a);
+        while(getchar()!='\n');
+        switch(a)
+        {
+            case '1':
+            break;
+            case '2':
+            simple=1;
+            break;
+            default:
+            printf("不是一个合法选项,请重新输入\n");
+           goto getfriend1;
+            break;
+        }
+        if (simple==1)
+        break;
     }
-    pthread_mutex_unlock(&mutex);
-    printf("i'm unlocked now\n");
     
 }
 int logon(struct work temp,int cfd)
