@@ -280,6 +280,45 @@ int use_mysql_6(int id,MYSQL mysql1)
 	}
 	return 0;
 }
+int use_mysql_13(int id,MYSQL mysql1)
+{
+		
+	char string[150];
+	sprintf(string,"select sid,rid,mes from smes where sid = %d or rid =%d and type=1",id,id);
+	printf("%s\n",string);
+	int                 ret;
+	unsigned int        num_rows;
+	unsigned int        num_feids;
+	MYSQL               mysql = mysql1;
+	MYSQL_RES           *result = NULL;
+	MYSQL_ROW           row;
+	struct work temp={'m',0,0,"","",0};
+	ret = mysql_query(&mysql, string);
+	if(!ret){
+		result = mysql_store_result(&mysql);
+		if(result){
+				printf("%s and %d\n",string,num_feids);
+				int send_fd;
+
+					while((row = mysql_fetch_row(result))){
+					temp.sid=atoi(row[0]);
+					temp.rid=atoi(row[1]);
+					strcpy(temp.mes,row[2]);
+					send_fd=getcfd(id);
+					send(send_fd,&temp,sizeof(temp),0);
+					}
+					temp.sid=0;
+					send(send_fd,&temp,sizeof(temp),0);
+				}
+				printf("\n");		
+		mysql_free_result(result);
+	}
+	else{
+		printf("query fail\n");
+		return -1;
+	}
+	return 0;
+}
 int use_mysql_10(struct work temp,MYSQL mysql1) //未测试 
 {
 	char string[50];
@@ -566,6 +605,14 @@ void read_mes(struct work temp)
     use_mysql_12(temp,a);
     close_mysql(a);
 }
+ void sendallmes(int id)
+
+ {
+	MYSQL a;
+    a=accept_mysql();
+    use_mysql_13(id,a);
+    close_mysql(a);
+ }
 int ishe(int id,struct s1 *s) //判断是否存在id
 {
 	MYSQL a;

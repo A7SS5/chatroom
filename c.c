@@ -9,6 +9,7 @@
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex2 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex3 = PTHREAD_MUTEX_INITIALIZER;
 yan_list_t list1=NULL;
 people_list_t list=NULL;
 mes_list_t mes1=NULL;
@@ -79,6 +80,8 @@ int main()
     send(cfd,&temp,sizeof(struct work),0);
     temp.tye='g';
     send(cfd,&temp,sizeof(struct work),0);
+    temp.tye='m';
+     send(cfd,&temp,sizeof(struct work),0);
     while(1)
     {
      //   system("clear");

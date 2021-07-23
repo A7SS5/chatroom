@@ -10,6 +10,7 @@ extern mes_list_t mes2;
 extern pthread_mutex_t mutex;
 extern pthread_mutex_t mutex1;
 extern pthread_mutex_t mutex2;
+extern pthread_mutex_t mutex3;
 int getch()
 {
    int c = 0;
@@ -30,12 +31,13 @@ int getch()
 }
 void *ralt(void* temp)
 {
-    int i,j,k=0;
+    int i,j,k,l=0;
     int cfd=*(int *)temp;
     struct work s1;
     people_node_t *new=NULL;
     yan_node_t *old=NULL;
     mes_node_t *nmes=NULL;
+     mes_node_t *lmes=NULL;
     while(1)
     {
         recv(cfd,&s1,sizeof(struct work),0);
@@ -118,6 +120,23 @@ void *ralt(void* temp)
             
   //              printf("%-20d%-20s%-20d\n",s1.rid,s1.name,s1.ret);
                 List_AddTail(mes1,nmes);                
+        break;
+        case 'm':
+        if (s1.sid==0) //发送者id不可能为0,表示结束并放开锁
+            {
+                l=0;
+                pthread_mutex_unlock(&mutex3);
+                break;
+            }
+            printf("%s",s1.mes);
+                if (l==0)
+                pthread_mutex_lock(&mutex3);
+                l++;
+                lmes=(mes_node_t*)malloc(sizeof(mes_node_t));
+                lmes->data.sid=s1.sid;
+                lmes->data.rid=s1.rid;
+                strcpy(lmes->data.mes,s1.mes);
+                List_AddTail(mes2,lmes); 
         break;
         }
     }
@@ -637,8 +656,55 @@ int SysLogon(int efd)
 }
 void readsmes(int cfd)
 {
-
-}
+   mes_node_t *q;
+   char *a;
+   int id;
+   char n;
+   readsmes1:
+   system("clear");
+    printf("请选择你要读取的用户(id)\n");
+    fflush(stdin);
+    while(scanf("%d",&id)!=1)
+    {
+        printf("输入的不是一个数字\n");
+        while(getchar()!='\n');
+    }
+    while (getchar()!='\n');
+    a=getname(id);
+    List_ForEach(mes2,q)
+    {
+        if (q->data.sid==id)
+        {
+            printf("id:%d 用户名:%s\n",id,a);
+            printf("%s",q->data.mes);
+        }
+        else if (q->data.rid==id)
+        {
+            printf("您:\n");
+            printf("%s",q->data.mes);
+        }
+    }
+    printf("\n");
+    printf("输入'1'继续查询\n");
+    printf("输入'2'退出查询\n");
+     readsmes2:
+    fflush(stdin);
+    n=getchar();
+    while (getchar()!='\n');
+    switch(n)
+    {
+        case '1':
+          goto readsmes1;
+        break;
+        case '2':
+        break;
+        default:
+        printf("输入不合法,请重新输入\n");
+        goto  readsmes2;
+        break;
+    }
+    
+}  
 void nreadsmes(int cfd)
 {
     people_node_t *p;

@@ -123,6 +123,10 @@ void *solve(void* temp)
         case 'l':
         read_mes(s1);
         break;
+        case 'm':
+        printf("m\n");
+        sendallmes(s1.sid);
+        break;
     }
     pthread_exit(0);
     return 0;
