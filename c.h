@@ -53,8 +53,11 @@ struct work {
 };
 int getch();
 void *ralt(void* temp);
+int ismyfriend(int id);
 void yanzheng();
 void fetchallfriend(int cfd);
+void fetchallmes(int cfd);
+void delete_friend(int cfd);
 void add_friend(int cfd);
 void getrequst(int cfd);
 int logon(struct work temp,int cfd);

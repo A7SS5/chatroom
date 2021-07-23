@@ -91,7 +91,7 @@ void *ralt(void* temp)
         }
     }
 }
-void yanzheng()
+void yanzheng(int cfd)
 {
     int id;
     yan_node_t *p;
@@ -102,6 +102,7 @@ void yanzheng()
         printf("输入不合法\n");
         return;
     }
+     while(getchar()!='\n');
     List_ForEach(list1,p)
     {
          struct work temp;
@@ -122,21 +123,33 @@ void yanzheng()
             printf("输入'2'来拒绝此条申请\n");
             yanzheng1:
             fflush(stdin);
-            scanf("%c\n",&a);
+            printf("your choice:");
+            scanf("%c",&a);
             while(getchar()!='\n');
             switch(a)
             {
                 case '1':
                 temp.tye='h';
-                temp.sid=myid;
+                temp.rid=myid;
+                temp.sid=p->data.sid;
+                temp.ret=p->data.type;
+                printf("已发送处理请求\n");
+                send(cfd,&temp,sizeof(temp),0);
                 break;
                 case '2':
+                temp.tye='i';
+                temp.rid=myid;
+                temp.sid=p->data.sid;
+                temp.ret=p->data.type;
+                printf("已发送处理请求\n");
+                send(cfd,&temp,sizeof(temp),0);
                 break;
                 default:
                 printf("不是一个合法选项，请重新输入\n");
                 goto yanzheng1;
                 break;
             }
+            break;
         }
     }
     
@@ -250,13 +263,47 @@ void add_friend(int cfd)
     }
    
 }
+void delete_friend(int cfd)
+{
+    int id;
+    printf("请输入你想删除好友的id号\n");
+    fflush(stdin);
+    if(scanf("%d",&id)!=1)
+    {
+        printf("输入的不是一个数字！\n");
+        return;
+    }
+    while(getchar()!='\n');
+    if (!ismyfriend(id))
+    {
+        printf("该用户不是您的好友!\n");
+        return;
+    }
+    struct work ss;
+    ss.tye='j';
+    ss.rid=id;
+    ss.sid=myid;
+    ss.ret=0;
+    send(cfd,&ss,sizeof(ss),0);
+}
+int ismyfriend(int id)
+{
+    people_node_t*p;
+    List_ForEach(list,p)
+    {
+        if (p->data.id==id)
+        return 1;
+
+    }
+    return 0;
+}
 void getrequst(int cfd)
 {
     char a;
     int simple=0;
     while(1)
     {
-        system("clear");
+   //     system("clear");
         pthread_mutex_lock(&mutex1);
         yan_node_t *p;
         printf("%-20s%-20s%-20s%-20s\n","序号","id","用户名","种类");
@@ -284,7 +331,7 @@ void getrequst(int cfd)
         switch(a)
         {
             case '1':
-            List_Free(list,people_node_t);
+            List_Free(list1,yan_node_t);
             struct work temp={'g',0,0,"","",0};
             temp.sid=myid;
             send(cfd,&temp,sizeof(struct work),0);
@@ -292,7 +339,7 @@ void getrequst(int cfd)
             sleep(2);
             break;
             case '2':
-            yanzheng();
+            yanzheng(cfd);
             break;
             case '3':
             simple=1;
@@ -524,6 +571,10 @@ int SysLogon(int efd)
     }
         return 1;
 }
+void fetchallmes(int cfd)
+{
+    
+}
 void managefriend(int cfd)
 {
     int simple=0;
@@ -543,6 +594,7 @@ void managefriend(int cfd)
             add_friend(cfd);
             break;
             case '2':
+            delete_friend(cfd);
             break;
             case '3':
             getrequst(cfd);

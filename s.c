@@ -106,6 +106,17 @@ void *solve(void* temp)
         case 'g':
         getmyrequst(s1.sid);
         break;
+        case 'h':
+        printf("i get a 'h\n");
+        agree(s1);
+        break;
+        case 'i':
+        printf("i get a 'i'\n");
+        disagree(s1);
+        break;
+        case 'j':
+        delete_friend(s1);
+        break;
     }
     printf("end\n");
     pthread_exit(0);

@@ -46,6 +46,7 @@ int use_mysql(const char *name,const char *password,MYSQL mysql1);
 int use_mysql_2(const char *name,MYSQL mysql1);
 int use_mysql_3(int id,MYSQL mysql1);
 int use_mysql_6(int id,MYSQL mysql1);
+int use_mysql_10(struct work temp,MYSQL mysql1);
 char* use_mysql_7(int id,MYSQL mysql1);
 int use_mysql_4(int id,MYSQL mysql1);
 int use_mysql_1(const char *name,const char *password,MYSQL mysql1);
@@ -59,4 +60,7 @@ int getstatus(int id);
 int getcfd(int id);
 int find_byname(const char*name);
 void add_friends(struct work temp);
+void disagree(struct work temp);
+void agree(struct work temp);
+void delete_friend(struct work temp);
 #endif

@@ -70,6 +70,8 @@ int main()
     struct work temp={'c',0,0,"","",0};
     temp.sid=myid;
     send(cfd,&temp,sizeof(struct work),0);
+    temp.tye='g';
+    send(cfd,&temp,sizeof(struct work),0);
     while(1)
     {
      //   system("clear");
@@ -86,11 +88,12 @@ int main()
         switch (op)
         {
         case '1':
-            fetchallfriend(cfd);
+        fetchallfriend(cfd);
         break;
         case '2':
         break;
         case '3':
+        fetchallmes(cfd);
         break;
         case '4':
         managefriend(cfd);

@@ -264,7 +264,6 @@ int use_mysql_6(int id,MYSQL mysql1)
 					temp.rid=atoi(row[0]);
 					temp.ret=atoi(row[2]);
 					strcpy(temp.name,row[3]);
-					printf("sad:%s\n",temp.name);
 					temp.sid=1;
 					send_fd=getcfd(id);
 					send(send_fd,&temp,sizeof(temp),0);
@@ -281,6 +280,71 @@ int use_mysql_6(int id,MYSQL mysql1)
 	}
 	return 0;
 }
+int use_mysql_10(struct work temp,MYSQL mysql1) //未测试 
+{
+	char string[50];
+	char string1[100];
+	char string2[100];
+	sprintf(string,"insert into requst values(0,%d,%d,%d)",temp.sid,temp.rid,temp.ret);
+	sprintf(string1,"delete from friend where sid=%d and rid=%d",temp.sid,temp.rid);
+	sprintf(string2,"delete from friend where sid=%d and rid=%d",temp.rid,temp.sid);
+	printf("%s\n",string);
+	MYSQL mysql=mysql1;
+	MYSQL_RES *result=NULL;
+	MYSQL_ROW row;
+	int ret;
+	if (!mysql_query(&mysql,string))
+	{
+		if (!mysql_query(&mysql,string1))
+		{
+			if (!mysql_query(&mysql,string2))
+			{
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+int use_mysql_9(struct work temp,MYSQL mysql1)
+{
+	char string[60];
+	sprintf(string,"delete from requst  where sid=%d and rid=%d and type=%d",temp.sid,temp.rid,temp.ret);
+	printf("%s\n",string);
+	MYSQL mysql=mysql1;
+	MYSQL_RES *result=NULL;
+	MYSQL_ROW row;
+	int ret;
+	if (!mysql_query(&mysql,string))
+	{
+		return 1;
+	}
+	return 0;
+}
+int use_mysql_8(struct work temp,MYSQL mysql1)
+{
+	char string[50];
+	char string1[50];
+	char string2[60];
+	sprintf(string,"insert into friend values(0,%d,%d)",temp.sid,temp.rid);
+	sprintf(string1,"insert into friend values(0,%d,%d)",temp.rid,temp.sid);
+	sprintf(string2,"delete from requst  where sid=%d and rid=%d and type=%d",temp.sid,temp.rid,temp.ret);
+	MYSQL mysql=mysql1;
+	MYSQL_RES *result=NULL;
+	MYSQL_ROW row;
+	int ret;
+	if (!mysql_query(&mysql,string))
+	{
+		if (!mysql_query(&mysql,string1))
+		{
+			if (!mysql_query(&mysql,string2))
+			{
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
 int use_mysql_1(const char *name,const char *password,MYSQL mysql1) //注册，先看有没有，再插入
 {
 	
@@ -419,6 +483,30 @@ void add_friends(struct work temp) //储存加好友信息
 		strcpy(temp.name,getname(temp.sid));
 		send(cfd,&temp,sizeof(temp),0);
 	}
+    close_mysql(a);
+}
+void agree(struct work temp)
+{
+	MYSQL a;
+	int ret;
+    a=accept_mysql();
+    use_mysql_8(temp,a);
+    close_mysql(a);
+}
+void disagree(struct work temp)
+{
+	int ret;
+		MYSQL a;
+    a=accept_mysql();
+    ret=use_mysql_9(temp,a);
+    close_mysql(a);
+}
+void delete_friend(struct work temp)
+{
+		MYSQL a;
+	int ret;
+    a=accept_mysql();
+    use_mysql_10(temp,a);
     close_mysql(a);
 }
 int ishe(int id,struct s1 *s) //判断是否存在id
