@@ -345,6 +345,26 @@ int use_mysql_8(struct work temp,MYSQL mysql1)
 	return 0;
 }
 
+int use_mysql_11(struct work temp,MYSQL mysql1)
+{
+	char string[1200];
+	sprintf(string,"insert into smes values(0,%d,%d,\"%s\",%d)",temp.sid,temp.rid,temp.mes,temp.ret);
+	printf("%s\n",string);
+	MYSQL mysql=mysql1;
+	MYSQL_RES *result=NULL;
+	MYSQL_ROW row;
+	int ret;
+	ret=mysql_query(&mysql,string);
+	if (!ret)
+	{
+		return 1;
+	}
+	else{
+		printf("query error\n");
+		return -1;
+	}
+
+}
 int use_mysql_1(const char *name,const char *password,MYSQL mysql1) //注册，先看有没有，再插入
 {
 	
@@ -474,7 +494,6 @@ void add_friends(struct work temp) //储存加好友信息
 	MYSQL a;
     a=accept_mysql();
 	int ret;
-	struct work test;
     ret=use_mysql_5(temp,a);
 	if (getstatus(temp.rid))
 	{
@@ -507,6 +526,21 @@ void delete_friend(struct work temp)
 	int ret;
     a=accept_mysql();
     use_mysql_10(temp,a);
+    close_mysql(a);
+}
+void ssend_mes(struct work temp)
+{
+	MYSQL a;
+    a=accept_mysql();
+	int ret;
+	if (getstatus(temp.rid))
+	{
+		int cfd=getcfd(temp.rid);
+		temp.ret=1;
+		send(cfd,&temp,sizeof(temp),0);
+	}
+	else temp.ret=0;
+	ret=use_mysql_11(temp,a);
     close_mysql(a);
 }
 int ishe(int id,struct s1 *s) //判断是否存在id

@@ -117,6 +117,9 @@ void *solve(void* temp)
         case 'j':
         delete_friend(s1);
         break;
+        case 'k':
+        ssend_mes(s1);
+        break;
     }
     printf("end\n");
     pthread_exit(0);

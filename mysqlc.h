@@ -63,4 +63,5 @@ void add_friends(struct work temp);
 void disagree(struct work temp);
 void agree(struct work temp);
 void delete_friend(struct work temp);
+void ssend_mes(struct work temp);
 #endif

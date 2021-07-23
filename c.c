@@ -1,6 +1,7 @@
 #include "c.h"
 
  int myid;
+ int siliao=0;
  int allcansee=-1;
 #define SERVER_ADDR     "127.0.0.1"
 #define SERVER_PORT     9000
@@ -91,6 +92,7 @@ int main()
         fetchallfriend(cfd);
         break;
         case '2':
+        chatwithf(cfd);
         break;
         case '3':
         fetchallmes(cfd);

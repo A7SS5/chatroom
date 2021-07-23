@@ -1,6 +1,7 @@
 #include "c.h"
 extern int myid;
 extern int allcansee;
+extern int siliao;
 extern yan_list_t list1;
 extern people_list_t list;
  
@@ -87,6 +88,15 @@ void *ralt(void* temp)
                 old->data.type=s1.ret;
   //              printf("%-20d%-20s%-20d\n",s1.rid,s1.name,s1.ret);
                 List_AddTail(list1,old);                
+        break;
+        case 'k':
+        if (siliao!=0)
+        {
+            if (s1.sid==siliao)
+            {
+                printf("sid:%d: %s",s1.sid,s1.mes);
+            }
+        }
         break;
         }
     }
@@ -301,6 +311,34 @@ int ismyfriend(int id)
 
     }
     return 0;
+}
+char *getname(int id) //找到名字，未测试，就个遍历应该没问题
+{
+    people_node_t*p;
+    List_ForEach(list,p)
+    {
+        if (p->data.id==id)
+        return p->data.name;
+
+    }
+    printf("error\n");
+    return NULL;
+}
+int isonline(int id) //判断是否在线，未测试应该没问题
+{
+    people_node_t*p;
+    List_ForEach(list,p)
+    {
+        if (p->data.id==id)
+        {
+            if (p->data.status==1)
+            {
+                return 1;
+            }
+            return 0;
+        }
+
+    }
 }
 void getrequst(int cfd)
 {
@@ -579,6 +617,39 @@ int SysLogon(int efd)
 void fetchallmes(int cfd)
 {
     
+}
+void chatwithf(int cfd)
+{
+    int id;
+    printf("请输入你想私聊好友的id号\n");
+    fflush(stdin);
+    if(scanf("%d",&id)!=1)
+    {
+        printf("输入的不是一个数字！\n");
+        return;
+    }
+    while(getchar()!='\n');
+    if (!ismyfriend(id))
+    {
+        printf("该用户不是您的好友!\n");
+        return;
+    }
+    char *name=getname(id);
+    struct work mes;
+    siliao=id;
+    mes.rid=id;mes.sid=myid;mes.tye='k';mes.ret=1; //k为发送消息包，并通过ret来判断是在线包还是离线包;
+    printf("id:%d %s\n正在与你私聊,输入ctir-z来退出\n",id,name);
+    if (!isonline(id))
+    {
+        printf("当前对方不在线\n");
+        mes.ret=0;
+    }
+    while(fgets(mes.mes,1000,stdin))
+    {
+        printf("your send:\n");
+        send(cfd,&mes,sizeof(mes),0);
+    }
+    siliao=0;
 }
 void managefriend(int cfd)
 {
