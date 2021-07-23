@@ -208,7 +208,7 @@ void add_friend(int cfd)
 {
     int id;
     char a;
-    int simple;
+    int simple=0;
     while(1)
     {
     printf("输入'1'来添加\n");
@@ -228,6 +228,11 @@ void add_friend(int cfd)
                 break;
             }
             while(getchar()!='\n');
+            if (ismyfriend(id))
+            {
+                printf("id:%d用户已经是您的好友!\n",id);
+                return;
+            }
             struct work ss;
             ss.tye='d';
             ss.rid=id;
