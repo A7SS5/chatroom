@@ -8,12 +8,17 @@
  
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex2 = PTHREAD_MUTEX_INITIALIZER;
 yan_list_t list1=NULL;
 people_list_t list=NULL;
+mes_list_t mes1=NULL;
+mes_list_t mes2=NULL;
 int main()
 {
     List_Init(list1,struct yan_node);
     List_Init(list,struct people_node);
+    List_Init(mes1,struct mes_node);
+    List_Init(mes2,struct mes_node);
     int cfd = 0;
     struct sockaddr_in saddr;
     char buf[BUFSIZ] = {0};
@@ -67,6 +72,7 @@ int main()
     }
     pthread_t pid1;
     int status;
+    int simple=0;
     pthread_create(&pid1,NULL,ralt,&cfd);
     struct work temp={'c',0,0,"","",0};
     temp.sid=myid;
@@ -101,9 +107,14 @@ int main()
         managefriend(cfd);
         break;
         case '5':
+        simple=1;
         break;
         default:
             printf("不是一个合法的选择,请重新输入\n");
+            break;
+        }
+        if (simple==1)
+        {
             break;
         }
     }

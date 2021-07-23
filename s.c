@@ -120,8 +120,10 @@ void *solve(void* temp)
         case 'k':
         ssend_mes(s1);
         break;
+        case 'l':
+        read_mes(s1);
+        break;
     }
-    printf("end\n");
     pthread_exit(0);
     return 0;
 }

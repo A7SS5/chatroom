@@ -4,9 +4,12 @@ extern int allcansee;
 extern int siliao;
 extern yan_list_t list1;
 extern people_list_t list;
- 
-extern pthread_mutex_t mutex ;
-extern pthread_mutex_t mutex1 ;
+extern mes_list_t mes1;
+extern mes_list_t mes2;
+
+extern pthread_mutex_t mutex;
+extern pthread_mutex_t mutex1;
+extern pthread_mutex_t mutex2;
 int getch()
 {
    int c = 0;
@@ -27,11 +30,12 @@ int getch()
 }
 void *ralt(void* temp)
 {
-    int i,j=0;
+    int i,j,k=0;
     int cfd=*(int *)temp;
     struct work s1;
     people_node_t *new=NULL;
     yan_node_t *old=NULL;
+    mes_node_t *nmes=NULL;
     while(1)
     {
         recv(cfd,&s1,sizeof(struct work),0);
@@ -62,7 +66,7 @@ void *ralt(void* temp)
             }
             else allcansee=1;
             break;
-        case 'f':
+        case 'f': //'f'在后期考虑丢弃,因为此功能没啥用,验证消息不用单独来接
                 old=(yan_node_t*)malloc(sizeof(yan_node_t));
                 old->data.sid=s1.sid;
                 strcpy(old->data.name,s1.name);
@@ -75,11 +79,11 @@ void *ralt(void* temp)
             if (s1.sid==0)
             {
                 j=0;
-                pthread_mutex_unlock(&mutex);
+                pthread_mutex_unlock(&mutex1);
                 break;
             }
                 if (j==0)
-                pthread_mutex_lock(&mutex);
+                pthread_mutex_lock(&mutex1);
                 j++;
                 old=(yan_node_t*)malloc(sizeof(yan_node_t));
                 old->data.xu=j;
@@ -96,7 +100,24 @@ void *ralt(void* temp)
             {
                 printf("sid:%d: %s",s1.sid,s1.mes);
             }
+            s1.tye='l';
+            send(cfd,&s1,sizeof(s1),0);
         }
+        if (s1.sid==0) //发送者id不可能为0,表示结束并放开锁
+            {
+                k=0;
+                pthread_mutex_unlock(&mutex2);
+                break;
+            }
+                if (k==0)
+                pthread_mutex_lock(&mutex2);
+                k++;
+                nmes=(mes_node_t*)malloc(sizeof(mes_node_t));
+                nmes->data.sid=s1.sid;
+                strcpy(nmes->data.mes,s1.mes);
+            
+  //              printf("%-20d%-20s%-20d\n",s1.rid,s1.name,s1.ret);
+                List_AddTail(mes1,nmes);                
         break;
         }
     }
@@ -614,9 +635,110 @@ int SysLogon(int efd)
     }
         return 1;
 }
+void readsmes(int cfd)
+{
+
+}
+void nreadsmes(int cfd)
+{
+    people_node_t *p;
+    mes_node_t *q;
+    int i=0;
+    int id;
+    char a;
+    mesid2:
+    system("clear");
+    struct work test;
+     test.tye='l';
+      test.rid=myid;
+    printf("%-20s%-20s%-20s\n","id","用户名","消息数");
+    List_ForEach(list,p)
+    {
+        i=0;
+        List_ForEach(mes1,q)
+        {
+            if (q->data.sid==p->data.id)
+            i++;
+        }
+        printf("%-20d%-20s%-20d\n",p->data.id,p->data.name,i);
+    }
+    printf("请选择你要读取的用户(id)\n");
+    mesid:
+    fflush(stdin);
+    printf("yourchoice:");
+    if (scanf("%d",&id)!=1)
+    {  
+        printf("输入不合法\n");
+        while(getchar()!='\n');
+        goto mesid;
+    }
+     while(getchar()!='\n');
+      List_ForEach(mes1,q)
+        {
+            if (q->data.sid==id)
+            {
+                test.sid=q->data.sid;
+                strcpy(test.mes,q->data.mes);
+                send(cfd,&test,sizeof(test),0);
+                printf("id:%d 用户名:%s\n%s",id,getname(id),q->data.mes);
+            }
+        }
+        printf("输入'1'来继续查看\n");
+        printf("输入'2'来退出查看\n");
+          mesid1:
+        fflush(stdin);
+        printf("yourchoice:");
+        if (scanf("%c",&a)!=1)
+        {  
+            printf("输入不合法\n");
+            while(getchar()!='\n');
+            goto mesid1;
+        }
+         while(getchar()!='\n');
+        switch(a)
+        {
+            case'1':
+            goto mesid2;
+            break;
+            case'2':
+            break;
+            default:
+            printf("不是一个合法选项\n");
+            sleep(1);
+             goto mesid2;
+        }
+
+}
 void fetchallmes(int cfd)
 {
-    
+    int simple=0;
+     char a;
+    while(1)
+    {
+        printf("输入'1'来查看未读消息\n");
+        printf("输入'2'来查看已读消息\n");
+        printf("输入'3'来退出消息记录\n");
+        fflush(stdin);
+        scanf("%c",&a);
+        while(getchar()!='\n');
+        switch(a)
+        {
+            case '1':
+            nreadsmes(cfd);
+            break;
+            case '2':
+            readsmes(cfd);
+            break;
+            case '3':
+            simple=1;
+            break;
+            default:
+            printf("不是一个合法选项请重新输入\n");
+            break;
+        }
+        if (simple==1)
+            break;
+    }
 }
 void chatwithf(int cfd)
 {
@@ -637,12 +759,11 @@ void chatwithf(int cfd)
     char *name=getname(id);
     struct work mes;
     siliao=id;
-    mes.rid=id;mes.sid=myid;mes.tye='k';mes.ret=1; //k为发送消息包，并通过ret来判断是在线包还是离线包;
+    mes.rid=id;mes.sid=myid;mes.tye='k';mes.ret=0; //k为发送消息包，并通过ret=1代表此消息对方未读.
     printf("id:%d %s\n正在与你私聊,输入ctir-z来退出\n",id,name);
     if (!isonline(id))
     {
         printf("当前对方不在线\n");
-        mes.ret=0;
     }
     while(fgets(mes.mes,1000,stdin))
     {

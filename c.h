@@ -23,6 +23,16 @@ typedef struct {
     char name[20];
     int type;
 }yan;
+typedef struct {
+int sid;
+int rid;
+char mes[1000];
+}mes;
+typedef struct mes_node{
+    mes data;
+    struct mes_node*prev;
+    struct mes_node*next;
+}mes_node_t,*mes_list_t;
 typedef struct yan_node
 {
     yan data;
