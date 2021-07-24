@@ -6,11 +6,15 @@ extern yan_list_t list1;
 extern people_list_t list;
 extern mes_list_t mes1;
 extern mes_list_t mes2;
+extern group_list_t group1;
+extern yan_list_t gyan;
 
 extern pthread_mutex_t mutex;
 extern pthread_mutex_t mutex1;
 extern pthread_mutex_t mutex2;
 extern pthread_mutex_t mutex3;
+extern pthread_mutex_t mutex4;
+extern pthread_mutex_t mutex5;
 int getch()
 {
    int c = 0;
@@ -31,13 +35,14 @@ int getch()
 }
 void *ralt(void* temp)
 {
-    int i,j,k,l=0;
+    int i,j,k,l,m=0;
     int cfd=*(int *)temp;
     struct work s1;
     people_node_t *new=NULL;
     yan_node_t *old=NULL;
     mes_node_t *nmes=NULL;
-     mes_node_t *lmes=NULL;
+    mes_node_t *lmes=NULL;
+    group_node_t *g=NULL;
     while(1)
     {
         recv(cfd,&s1,sizeof(struct work),0);
@@ -116,8 +121,7 @@ void *ralt(void* temp)
                 k++;
                 nmes=(mes_node_t*)malloc(sizeof(mes_node_t));
                 nmes->data.sid=s1.sid;
-                strcpy(nmes->data.mes,s1.mes);
-            
+                strcpy(nmes->data.mes,s1.mes);           
   //              printf("%-20d%-20s%-20d\n",s1.rid,s1.name,s1.ret);
                 List_AddTail(mes1,nmes);                
         break;
@@ -128,7 +132,6 @@ void *ralt(void* temp)
                 pthread_mutex_unlock(&mutex3);
                 break;
             }
-            printf("%s",s1.mes);
                 if (l==0)
                 pthread_mutex_lock(&mutex3);
                 l++;
@@ -137,6 +140,29 @@ void *ralt(void* temp)
                 lmes->data.rid=s1.rid;
                 strcpy(lmes->data.mes,s1.mes);
                 List_AddTail(mes2,lmes); 
+        break;
+        case 'o':
+         if (s1.ret==0)
+            {
+                allcansee=0;
+            }
+            else allcansee=1;
+            break;
+        case 'p':
+        if (s1.rid==0) //发送者id不可能为0,表示结束并放开锁
+        {
+            m=0;
+            pthread_mutex_unlock(&mutex4);
+            break;
+        } 
+        if (m==0)
+        pthread_mutex_lock(&mutex4);
+        m++;
+        g=(struct group_node*)malloc(sizeof(group_node_t));
+        g->data.gid=s1.rid;
+        strcpy(g->data.name,s1.name);
+        g->data.power=s1.ret;
+         List_AddTail(group1,g); 
         break;
         }
     }
@@ -464,6 +490,52 @@ int login(struct work temp,int cfd)
     }
     else if (s1.ret==-1)
     return -1;
+}
+void creategroup(int cfd)
+{
+    printf("请为您想创建的群组设置一个名字\n");
+    struct work test;
+    int j;
+    char n;
+    char usrname[30];
+     add_group:
+        printf("群组名:");
+        j = 0;
+        while ((n = getchar()) != '\n')
+        {
+            if (n == ' ' || j >= 29)
+            {
+                while ((n = getchar()) != '\n');
+                
+                printf("群组名不合规\n");
+                j = 0;
+                goto add_group;
+            }
+            usrname[j++] = n;
+        }
+        if (n == '\n' && j == 0)
+        {
+            printf("群组名不为空\n");
+            j = 0;
+            goto add_group;
+        }
+        usrname[j] = '\0';
+    strcpy(test.name,usrname);
+    test.tye='o';
+    test.sid=myid;
+    send(cfd,&test,sizeof(test),0);
+    allcansee=-1;
+    while(allcansee==-1)
+    {
+        sleep(1);
+    }
+    if (allcansee==0)
+    {
+        printf("该群组已经存在！\n");
+    }
+    else printf("已成功建立群组\n");
+    printf("输入回车来返回上层界面\n");
+    while(getchar()!='\n');
 }
 int SysLogin(int efd)  // SL界面
 {
@@ -837,6 +909,251 @@ void chatwithf(int cfd)
         send(cfd,&mes,sizeof(mes),0);
     }
     siliao=0;
+}
+void joingroup(int cfd)
+{
+    system("clear");
+    int id;
+    struct work temp;
+    printf("请输入您想加入的群组id号\n");
+    fflush(stdin);
+    while (scanf("%d",&id)!=1)
+    {   while(getchar()!='\n');
+        printf("输入的不是一个数字！，请重新输入\n");
+    }
+    temp.sid=myid;
+    temp.rid=id;
+    temp.tye='p';
+    send(cfd,&temp,sizeof(temp),0);
+     allcansee=-1;
+    while(allcansee==-1)
+    {
+        sleep(1);
+    }
+    if (allcansee==0)
+    {
+        printf("该群组不存在！\n");
+    }
+    else if (allcansee==1)
+    {
+        printf("已成功发出请求\n");
+    }
+    printf("按下回车键返回上层界面\n");
+    while(getchar()!='\n');
+}
+void getgroup(int cfd)
+{
+    struct group_node* p;
+    char a; struct work test;
+    int simple=0;
+    while(1)
+    {
+        system("clear");
+        pthread_mutex_lock(&mutex4);
+        printf("%-20s%-20s\n","群组id","群组名称");
+        List_ForEach(group1,p)
+        {
+            printf("%-20d%-20s\n",p->data.gid,p->data.name);
+        }
+        pthread_mutex_lock(&mutex4);
+        printf("输入'1'来刷新加入的群组\n");
+        printf("输入'2'来返回上层界面\n");
+        fflush(stdin);
+        while(scanf("%c",&a)!=1)
+        {
+            printf("输入的不是一个有效选项\n");
+            while(getchar()!='\n');
+        }
+        while(getchar()!='\n');
+        switch(a)
+        {
+            case '1':
+            test.tye='q';
+            test.sid=myid;
+            send(cfd,&test,sizeof(test),0);
+            printf("正在获取数据.....\n");
+            sleep(1);
+            break;
+            case '2':
+            simple=1;
+            break;
+            default:
+            printf("输入的不是有效选项,请重新输入\n");
+            break;
+        }
+        if (simple==1)
+        {
+            break;
+        }
+    }
+}
+void managegroup(int cfd)
+{
+    struct group_node *p;
+    int id;
+    mangroup:
+    system("clear");
+    int i=0;
+    printf("%-20s%-20s\n","群组id","群组名称");
+    pthread_mutex_lock(&mutex4);
+    List_ForEach(group1,p)
+    {
+        printf("%-20d%-20s\n",p->data.gid,p->data.name);
+    }
+    pthread_mutex_unlock(&mutex4);
+    printf("请输入你要管理的群组id:\n");
+    fflush(stdin);
+    while(scanf("%d",&id)!=1)
+    {
+        printf("输入的不是有效的id!请重新输入\n");
+        while(getchar()!='\n');
+    }
+    while(getchar()!='\n');
+    List_ForEach(group1,p)
+    {
+       if (p->data.gid==id)
+       {
+           i=1;
+           break;
+       }
+    }
+    if (i==0)
+    {
+        printf("输入的不是有效的id!请重新输入\n");
+        goto mangroup;
+    }
+    if (p->data.power==2)
+    {
+            owner(p,cfd);
+    }
+    else if (p->data.power==1)
+    {
+            admin(p,cfd);
+    }
+    else if (p->data.power==0)
+    {
+            dog(p,cfd);
+    }
+
+}
+void getgrequst(group_node_t* temp,int cfd)   //未完成
+{
+    char a;
+    int simple=0;
+    while(1)
+    {
+   //     system("clear");
+        pthread_mutex_lock(&mutex5);
+        yan_node_t *p;
+        printf("%-20s%-20s%-20s%-20s\n","序号","id","用户名","种类");
+        List_ForEach(gyan,p)
+        {
+            printf("%-20d%-20d%-20s",p->data.xu,p->data.sid,p->data.name);
+            if (p->data.type==1)
+            {
+                printf("%-20s\n","申请");
+            }
+            else if (p->data.type==0)
+            {
+                printf("%-20s\n","删除");
+            }
+        }
+        pthread_mutex_unlock(&mutex5);
+       
+        printf("输入'1'来刷新验证消息表\n");
+        printf("输入'2'来选择一条信息操作\n");
+        printf("输入'3'来退出\n");
+        getgrequst1:
+        fflush(stdin);
+        scanf("%c",&a);
+        while(getchar()!='\n');
+        switch(a)
+        {
+            case '1':
+            List_Free(list1,yan_node_t);
+            struct work temp1={'r',0,0,"","",0};
+            temp1.sid=myid;
+            temp1.rid=temp->data.gid;
+            send(cfd,&temp,sizeof(struct work),0);
+            printf("I'm waiting for data now\n");
+            sleep(2);
+            break;
+            case '2':
+            yanzheng(cfd);
+            break;
+            case '3':
+            simple=1;
+            break;
+            default:
+            printf("不是一个合法选项,请重新输入\n");
+           goto getgrequst1;
+            break;
+        }
+        if (simple==1)
+        break;
+    }
+}
+void owner(group_node_t* temp,int cfd) //主人
+{
+    while(1)
+    {
+        own:
+        system("clear");
+        char a;
+        printf("欢迎你%-20s的群主\n",temp->data.name);
+        printf("输入'1'来查看群验证信息\n");
+        printf("输入'2'来设置一个管理员\n");
+        printf("输入'3'来踢出一个群成员\n");
+        printf("输入'4'来解散本群组\n");
+        printf("输入'5'来查看群成员\n");
+        printf("输入'6'来退出本界面\n");
+        fflush(stdin);
+        if (scanf("%c",&a)!=1)
+        {
+            printf("输入不合法,请重新输入\n");
+            while(getchar()!='\n');
+            goto own;
+        }
+        while(getchar()!='\n');
+        switch(a)
+        {
+            case '1':
+            getgrequst(temp,cfd);
+            break;
+            case '2':
+            break;
+            case '3':
+            break;
+            case '4':
+            break;
+            case '5':
+            break;
+            case '6':
+            break;
+            default:
+            printf("输入不合法,请重新输入\n");
+            goto own;
+            break;
+        }
+    }
+}
+void admin(group_node_t* temp,int cfd)  //管理员
+{
+     system("clear");
+    printf("欢迎你%-20s的管理员\n",temp->data.name);
+    printf("输入'1'来查看验证信息\n");
+    printf("输入'2'来踢出一个群成员\n");
+    printf("输入'3'来退出本群\n");
+    printf("输入'4'来查看群成员\n");
+    printf("输入'5'来退出本界面\n");
+}
+void dog(group_node_t* temp,int cfd) //普通群员
+{
+    system("clear");
+    printf("欢迎你%-20s的群成员\n",temp->data.name);
+    printf("输入'1'来查看群成员\n");
+    printf("输入'2'来退出本群\n");
+    printf("输入'3'来退出本界面\n");
 }
 void managefriend(int cfd)
 {

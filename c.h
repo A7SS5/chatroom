@@ -16,7 +16,16 @@
 #include <strings.h>
 #include <string.h>
 
-
+typedef struct {
+    int gid;
+    char name[30];
+    int power;
+}group;
+typedef struct group_node{
+group data;
+struct group_node*prev;
+struct group_node*next;
+}group_node_t,*group_list_t;
 typedef struct {
     int xu;
     int sid;
@@ -76,7 +85,12 @@ int login(struct work temp,int cfd);
 int SysLogin(int efd);  // SL界面
 int SysLogon(int efd);
 void managefriend(int cfd);
-
-
-
+void creategroup(int cfd);
+void joingroup(int cfd);
+void getgroup(int cfd);
+void managegroup(int cfd);
+void owner(group_node_t* temp,int cfd);
+void admin(group_node_t* temp,int cfd);
+void dog(group_node_t* temp,int cfd);
+void getgrequst(group_node_t* temp,int cfd);
 #endif

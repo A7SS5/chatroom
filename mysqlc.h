@@ -48,6 +48,7 @@ int use_mysql_3(int id,MYSQL mysql1);
 int use_mysql_6(int id,MYSQL mysql1);
 int use_mysql_10(struct work temp,MYSQL mysql1);
 char* use_mysql_7(int id,MYSQL mysql1);
+int use_mysql_18(int gid,int sid,MYSQL mysql1);
 int use_mysql_4(int id,MYSQL mysql1);
 int use_mysql_1(const char *name,const char *password,MYSQL mysql1);
 int judege(const char *name,const char *password);
@@ -65,5 +66,10 @@ void agree(struct work temp);
 void delete_friend(struct work temp);
 void ssend_mes(struct work temp);
 void read_mes(struct work temp);
+void getallnmes(int id);
+void createg(struct work temp);
 void sendallmes(int id);
+void joingroups(struct work temp);
+void getmygroup(int id);
+void getmygrequst(int gid,int sid);
 #endif

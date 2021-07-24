@@ -127,6 +127,21 @@ void *solve(void* temp)
         printf("m\n");
         sendallmes(s1.sid);
         break;
+        case 'n':
+        getallnmes(s1.sid);
+        break;
+        case 'o':
+        createg(s1);
+        break;
+        case 'p':
+        joingroups(s1);
+        break;
+        case 'q':
+        getmygroup(s1.sid);
+        break;
+        case 'r':
+        getmygrequst(s1.rid,s1.sid);
+        break;
     }
     pthread_exit(0);
     return 0;
