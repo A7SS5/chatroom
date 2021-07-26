@@ -137,10 +137,17 @@ void *solve(void* temp)
         joingroups(s1);
         break;
         case 'q':
+        printf("i got q\n");
         getmygroup(s1.sid);
         break;
         case 'r':
         getmygrequst(s1.rid,s1.sid);
+        break;
+        case 't':
+         agreeg(s1);
+        break;
+        case 'u':
+         disagreeg(s1);
         break;
     }
     pthread_exit(0);

@@ -72,10 +72,12 @@ struct work {
 int getch();
 void *ralt(void* temp);
 int ismyfriend(int id);
-void yanzheng();
+void yanzheng(int cfd);
+void yanzhengg(int cfd,int gid);
 void fetchallfriend(int cfd);
 void fetchallmes(int cfd);
 void delete_friend(int cfd);
+void getgroupmates(int gid,int cfd);
 void add_friend(int cfd);
 void chatwithf(int cfd);
 void getrequst(int cfd);

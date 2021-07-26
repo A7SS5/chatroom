@@ -15,6 +15,10 @@ extern pthread_mutex_t mutex2;
 extern pthread_mutex_t mutex3;
 extern pthread_mutex_t mutex4;
 extern pthread_mutex_t mutex5;
+void getgroupmates(int gid,int cfd)
+{
+    
+}
 int getch()
 {
    int c = 0;
@@ -35,7 +39,12 @@ int getch()
 }
 void *ralt(void* temp)
 {
-    int i,j,k,l,m=0;
+    int i=0;
+    int j=0;
+    int k=0;
+    int l=0;
+    int m=0;
+    int n=0;
     int cfd=*(int *)temp;
     struct work s1;
     people_node_t *new=NULL;
@@ -154,7 +163,7 @@ void *ralt(void* temp)
             m=0;
             pthread_mutex_unlock(&mutex4);
             break;
-        } 
+        }
         if (m==0)
         pthread_mutex_lock(&mutex4);
         m++;
@@ -164,8 +173,90 @@ void *ralt(void* temp)
         g->data.power=s1.ret;
          List_AddTail(group1,g); 
         break;
+        case 'q':
+            if (s1.sid==0)
+                {
+                    n=0;
+                    pthread_mutex_unlock(&mutex5);
+                    break;
+                }
+                    if (n==0)
+                    pthread_mutex_lock(&mutex5);
+                    n++;
+                    old=(yan_node_t*)malloc(sizeof(yan_node_t));
+                    old->data.xu=n;
+                    old->data.sid=s1.sid;
+                    strcpy(old->data.name,s1.name);
+                    old->data.type=s1.ret;
+    //              printf("%-20d%-20s%-20d\n",s1.rid,s1.name,s1.ret);
+                    List_AddTail(gyan,old);                
+        break;
         }
     }
+}
+void yanzhengg(int cfd,int gid)
+{
+    int id;
+    yan_node_t *p;
+    printf("输入操作的序号\n");
+    fflush(stdin);
+    if (scanf("%d",&id)!=1)
+    {  
+        printf("输入不合法\n");
+        return;
+    }
+     while(getchar()!='\n');
+    List_ForEach(gyan,p)
+    {
+         struct work temp;
+        if (p->data.xu==id)
+        {
+             printf("%-20s%-20s%-20s%-20s\n","序号","id","用户名","种类");
+            printf("%-20d%-20d%-20s",p->data.xu,p->data.sid,p->data.name);
+             if (p->data.type==1)
+            {
+                printf("%-20s\n","申请");
+            }
+            else if (p->data.type==0)
+            {
+                printf("%-20s\n","删除");
+            }
+            char a;
+            printf("输入'1'来同意此条申请\n");
+            printf("输入'2'来拒绝此条申请\n");
+            yanzheng2:
+            fflush(stdin);
+            printf("your choice:");
+            scanf("%c",&a);
+            while(getchar()!='\n');
+            switch(a)
+            {
+                case '1':
+                temp.tye='t';
+                temp.rid=gid;
+                temp.sid=p->data.sid;
+                temp.ret=p->data.type;
+                printf("已发送处理请求\n");
+                send(cfd,&temp,sizeof(temp),0);
+                break;
+                case '2':
+                temp.tye='u';
+                temp.rid=gid;
+                temp.sid=p->data.sid;
+                temp.ret=p->data.type;
+                printf("已发送处理请求\n");
+                send(cfd,&temp,sizeof(temp),0);
+                break;
+                default:
+                printf("不是一个合法选项，请重新输入\n");
+                goto yanzheng2;
+                break;
+            }
+            break;
+        }
+    }
+    
+
 }
 void yanzheng(int cfd)
 {
@@ -898,7 +989,7 @@ void chatwithf(int cfd)
     struct work mes;
     siliao=id;
     mes.rid=id;mes.sid=myid;mes.tye='k';mes.ret=0; //k为发送消息包，并通过ret=1代表此消息对方未读.
-    printf("id:%d %s\n正在与你私聊,输入ctir-z来退出\n",id,name);
+    printf("id:%d %s\n正在与你私聊,输入exit来退出\n",id,name);
     if (!isonline(id))
     {
         printf("当前对方不在线\n");
@@ -906,6 +997,10 @@ void chatwithf(int cfd)
     while(fgets(mes.mes,1000,stdin))
     {
         printf("your send:\n");
+        if (strcmp(mes.mes,"exit\n")==0)
+        {
+            break;
+        }
         send(cfd,&mes,sizeof(mes),0);
     }
     siliao=0;
@@ -955,7 +1050,7 @@ void getgroup(int cfd)
         {
             printf("%-20d%-20s\n",p->data.gid,p->data.name);
         }
-        pthread_mutex_lock(&mutex4);
+        pthread_mutex_unlock(&mutex4);
         printf("输入'1'来刷新加入的群组\n");
         printf("输入'2'来返回上层界面\n");
         fflush(stdin);
@@ -1070,16 +1165,16 @@ void getgrequst(group_node_t* temp,int cfd)   //未完成
         switch(a)
         {
             case '1':
-            List_Free(list1,yan_node_t);
+            List_Free(gyan,yan_node_t);
             struct work temp1={'r',0,0,"","",0};
             temp1.sid=myid;
             temp1.rid=temp->data.gid;
-            send(cfd,&temp,sizeof(struct work),0);
+            send(cfd,&temp1,sizeof(struct work),0);
             printf("I'm waiting for data now\n");
             sleep(2);
             break;
             case '2':
-            yanzheng(cfd);
+            yanzhengg(cfd,temp->data.gid);
             break;
             case '3':
             simple=1;
@@ -1129,6 +1224,7 @@ void owner(group_node_t* temp,int cfd) //主人
             case '5':
             break;
             case '6':
+            getgroupmates(temp->data.gid,cfd);
             break;
             default:
             printf("输入不合法,请重新输入\n");

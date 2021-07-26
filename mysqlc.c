@@ -294,7 +294,6 @@ int use_mysql_6(int id,MYSQL mysql1)
 		if(result){
 			num_rows = mysql_num_rows(result);
 			num_feids=mysql_num_fields(result);
-				printf("%s and %d\n",string,num_feids);
 				int send_fd;
 
 					while((row = mysql_fetch_row(result))){
@@ -321,12 +320,12 @@ int use_mysql_18(int gid,int sid,MYSQL mysql1)
 {
 		
 	char string[150];
-	sprintf(string,"select distinct sid,rid,type,用户数据.用户名 from requst,用户数据 where rid=%d and sid=uid;",gid);
+	sprintf(string,"select distinct sid,用户名,type from 用户数据,grequst where gid=%d and sid=uid;",gid);
 	int                 ret;
 	MYSQL               mysql = mysql1;
 	MYSQL_RES           *result = NULL;
 	MYSQL_ROW           row;
-	struct work temp={'g',0,0,"","",0};
+	struct work temp={'q',0,0,"","",0};
 	
 //	mysql_query(&mysql,"use etc");
 	ret = mysql_query(&mysql, string);
@@ -334,13 +333,11 @@ int use_mysql_18(int gid,int sid,MYSQL mysql1)
 		result = mysql_store_result(&mysql);
 		if(result){
 				int send_fd;
-
+					send_fd=getcfd(sid);
 					while((row = mysql_fetch_row(result))){
-					temp.rid=atoi(row[0]);
 					temp.ret=atoi(row[2]);
-					strcpy(temp.name,row[3]);
-					temp.sid=1;
-					send_fd=getcfd(id);
+					strcpy(temp.name,row[1]);
+					temp.sid=atoi(row[0]);
 					send(send_fd,&temp,sizeof(temp),0);
 					}
 					temp.sid=0;
@@ -372,7 +369,6 @@ int use_mysql_13(int id,MYSQL mysql1)
 	if(!ret){
 		result = mysql_store_result(&mysql);
 		if(result){
-				printf("%s and %d\n",string,num_feids);
 				int send_fd;
 
 					while((row = mysql_fetch_row(result))){
@@ -411,7 +407,6 @@ int use_mysql_14(int id,MYSQL mysql1)
 	if(!ret){
 		result = mysql_store_result(&mysql);
 		if(result){
-				printf("%s and %d\n",string,num_feids);
 				int send_fd;
 
 					while((row = mysql_fetch_row(result))){
@@ -505,6 +500,21 @@ int use_mysql_9(struct work temp,MYSQL mysql1)
 {
 	char string[60];
 	sprintf(string,"delete from requst  where sid=%d and rid=%d and type=%d",temp.sid,temp.rid,temp.ret);
+	printf("%s\n",string);
+	MYSQL mysql=mysql1;
+	MYSQL_RES *result=NULL;
+	MYSQL_ROW row;
+	int ret;
+	if (!mysql_query(&mysql,string))
+	{
+		return 1;
+	}
+	return 0;
+}
+int use_mysql_20(struct work temp,MYSQL mysql1)
+{
+	char string[60];
+	sprintf(string,"delete from grequst  where sid=%d and gid=%d and type=%d",temp.sid,temp.rid,temp.ret);
 	printf("%s\n",string);
 	MYSQL mysql=mysql1;
 	MYSQL_RES *result=NULL;
@@ -688,7 +698,25 @@ int use_mysql_15(struct work temp,MYSQL mysql1)
 	}
 	return 0;
 }
-
+int use_mysql_19(struct work temp,MYSQL mysql1)
+{
+	char string[50];
+	char string2[60];
+	sprintf(string,"insert into groupmates values(%d,%d,0)",temp.rid,temp.sid);
+	sprintf(string2,"delete from grequst  where sid=%d and gid=%d and type=%d",temp.sid,temp.rid,temp.ret);
+	MYSQL mysql=mysql1;
+	MYSQL_RES *result=NULL;
+	MYSQL_ROW row;
+	int ret;
+	if (!mysql_query(&mysql,string))
+	{
+			if (!mysql_query(&mysql,string2))
+			{
+				return 1;
+			}
+	}
+	return 0;
+}
 int use_mysql_2(const char *name,MYSQL mysql1)
 {
 	char string[50];
@@ -808,6 +836,22 @@ void disagree(struct work temp)
 		MYSQL a;
     a=accept_mysql();
     ret=use_mysql_9(temp,a);
+    close_mysql(a);
+}
+void agreeg(struct work temp)
+{
+	MYSQL a;
+	int ret;
+    a=accept_mysql();
+    use_mysql_19(temp,a);
+    close_mysql(a);
+}
+void disagreeg(struct work temp)
+{
+	int ret;
+		MYSQL a;
+    a=accept_mysql();
+    ret=use_mysql_20(temp,a);
     close_mysql(a);
 }
 void delete_friend(struct work temp)
