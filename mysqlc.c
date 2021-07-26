@@ -274,6 +274,95 @@ int use_mysql_3(int id,MYSQL mysql1)
 	}
 	return 0;
 }
+int use_mysql_21(int gid,int cfd,MYSQL mysql1)
+{
+		
+	char string[120];
+	sprintf(string,"select distinct pid,power,用户名 from groupmates,用户数据 where pid=uid and gid=%d;",gid);
+	printf("%s\n",string);
+	int                 i;
+	int                 ret;
+	unsigned int        num_rows;
+	MYSQL               mysql = mysql1;
+	MYSQL_RES           *result = NULL;
+	MYSQL_ROW           row;
+	struct work temp={'r',0,0,"","",0};
+	
+//	mysql_query(&mysql,"use etc");
+	ret = mysql_query(&mysql, string);
+	if(!ret){
+		result = mysql_store_result(&mysql);
+		if(result){
+			num_rows = mysql_num_rows(result);
+					while((row = mysql_fetch_row(result))){
+					temp.rid=atoi(row[0]);
+					strcpy(temp.name,row[2]);
+					temp.ret=atoi(row[1]);
+					send(cfd,&temp,sizeof(temp),0);
+					}
+					temp.rid=0;
+					send(cfd,&temp,sizeof(temp),0);
+				}
+				printf("\n");		
+		mysql_free_result(result);
+	}
+	else{
+		printf("query fail\n");
+		return -1;
+	}
+	return 0;
+}
+int use_mysql_24(int gid,MYSQL mysql1) //还没完，把聊天记录也一删除
+{
+	char string[60];
+	char string1[60];
+	sprintf(string,"delete from groupmates where gid=%d",gid);
+	sprintf(string,"delete from grouplist where gid=%d",gid);
+	printf("%s\n",string);
+	MYSQL mysql=mysql1;
+	MYSQL_RES *result=NULL;
+	MYSQL_ROW row;
+	if (!mysql_query(&mysql,string))
+	{
+		if (!mysql_query(&mysql,string1))
+		{
+			
+			return 1;
+		}
+	return 0;
+	}
+	return 0;
+}
+int use_mysql_23(struct work s1,MYSQL mysql1)
+{
+	char string[60];
+	sprintf(string,"delete from groupmates where gid=%d and pid=%d",s1.sid,s1.rid);
+	printf("%s\n",string);
+	MYSQL mysql=mysql1;
+	MYSQL_RES *result=NULL;
+	MYSQL_ROW row;
+	int ret;
+	if (!mysql_query(&mysql,string))
+	{
+		return 1;
+	}
+	return 0;
+}
+int use_mysql_22(struct work s1,MYSQL mysql1)
+{
+	char string[60];
+	sprintf(string," update groupmates set power=1 where pid=%d and gid=%d",s1.rid,s1.sid);
+	printf("%s\n",string);
+	MYSQL mysql=mysql1;
+	MYSQL_RES *result=NULL;
+	MYSQL_ROW row;
+	int ret;
+	if (!mysql_query(&mysql,string))
+	{
+		return 1;
+	}
+	return 0;
+}
 int use_mysql_6(int id,MYSQL mysql1)
 {
 		
@@ -915,6 +1004,35 @@ void getmygroup(int id)
 	MYSQL a;
     a=accept_mysql();
     use_mysql_17(id,a);
+    close_mysql(a);
+}
+void getmates(int gid,int cfd)
+{
+	MYSQL a;
+    a=accept_mysql();
+	int ret;
+    ret=use_mysql_21(gid,cfd,a);
+    close_mysql(a);
+}
+void setadmin(struct work s1,int cfd)
+{
+	MYSQL a;
+    a=accept_mysql();
+    use_mysql_22(s1,a);
+    close_mysql(a);
+}
+void delmate(struct work s1,int cfd)
+{
+	MYSQL a;
+    a=accept_mysql();
+    use_mysql_23(s1,a);
+    close_mysql(a);
+}
+void killgroup(int gid)
+{
+	MYSQL a;
+    a=accept_mysql();
+    use_mysql_24(gid,a);
     close_mysql(a);
 }
 int ishe(int id,struct s1 *s) //判断是否存在id

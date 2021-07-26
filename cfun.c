@@ -4,6 +4,7 @@ extern int allcansee;
 extern int siliao;
 extern yan_list_t list1;
 extern people_list_t list;
+extern people_list_t glist;
 extern mes_list_t mes1;
 extern mes_list_t mes2;
 extern group_list_t group1;
@@ -15,8 +16,56 @@ extern pthread_mutex_t mutex2;
 extern pthread_mutex_t mutex3;
 extern pthread_mutex_t mutex4;
 extern pthread_mutex_t mutex5;
+extern pthread_mutex_t mutex6;
 void getgroupmates(int gid,int cfd)
 {
+      char a;
+     int simple=0;
+    while(1)
+    {
+        system("clear");
+        pthread_mutex_lock(&mutex6);
+        people_node_t *p;
+        printf("%-20s%-20s%-20s\n","id","用户名","身份");
+        List_ForEach(glist,p)
+        {
+            printf("%-20d%-20s",p->data.id,p->data.name);
+            if (p->data.status==2)
+            printf("%-20s\n","群主");
+            else if (p->data.status==1)
+            printf("%-20s\n","管理员");
+            else printf("%-20s\n","群成员");
+            
+        }
+        pthread_mutex_unlock(&mutex6);
+       
+        printf("输入'1'来刷新状态\n");
+        printf("输入'2'来退出查看\n");
+        getgroupmates1:
+        fflush(stdin);
+        scanf("%c",&a);
+        while(getchar()!='\n');
+        switch(a)
+        {
+            case '1':
+            List_Free(glist,people_node_t);
+            struct work temp={'v',0,0,"","",0};
+            temp.sid=gid;
+            send(cfd,&temp,sizeof(struct work),0);
+            printf("I'm waiting for data now\n");
+            sleep(2);
+            break;
+            case '2':
+            simple=1;
+            break;
+            default:
+            printf("不是一个合法选项,请重新输入\n");
+           goto getgroupmates1;
+            break;
+        }
+        if (simple==1)
+        break;
+    }
     
 }
 int getch()
@@ -45,6 +94,7 @@ void *ralt(void* temp)
     int l=0;
     int m=0;
     int n=0;
+    int o=0;
     int cfd=*(int *)temp;
     struct work s1;
     people_node_t *new=NULL;
@@ -191,8 +241,58 @@ void *ralt(void* temp)
     //              printf("%-20d%-20s%-20d\n",s1.rid,s1.name,s1.ret);
                     List_AddTail(gyan,old);                
         break;
+        case 'r':
+         if (s1.rid==0)
+            {
+                o=0;
+                pthread_mutex_unlock(&mutex6);
+                break;
+            }
+                if (o==0)
+                pthread_mutex_lock(&mutex6);
+                o++;
+                new=(people_node_t*)malloc(sizeof(people_node_t));
+                new->data.id=s1.rid;
+                strcpy(new->data.name,s1.name);
+                new->data.status=s1.ret;
+                
+  //              printf("%-20d%-20s%-20d\n",s1.rid,s1.name,s1.ret);
+                List_AddTail(glist,new);     
+        break;
         }
     }
+}
+void exitgroup(int cfd,int gid)
+{
+    char choice;
+    exit1:
+    printf("你真的要退出本群聊吗？输入'y'或'n'");
+    fflush(stdin);
+    while(scanf("%c",&choice)!=1)
+    {
+        printf("输入的不是一个字符,请重新输入\n");
+         while(getchar()!='\n');
+         goto exit1;
+    }
+    while(getchar()!='\n');
+    if (choice=='y')
+    {
+        struct work temp;
+        temp.tye='x';
+        temp.sid=gid;
+        temp.rid=myid;
+        send(cfd,&temp,sizeof(temp),0);
+        return;
+    }
+    else if (choice=='n')
+    {
+        return;
+    }
+    else {
+        printf("输入了一个无效字符,请重新输入\n");
+        goto exit1;
+    }
+    
 }
 void yanzhengg(int cfd,int gid)
 {
@@ -1063,6 +1163,7 @@ void getgroup(int cfd)
         switch(a)
         {
             case '1':
+            List_Free(group1,group_node_t);
             test.tye='q';
             test.sid=myid;
             send(cfd,&test,sizeof(test),0);
@@ -1080,6 +1181,168 @@ void getgroup(int cfd)
         {
             break;
         }
+    }
+}
+void deletemate(int gid,int cfd)
+{
+        char a;
+     int simple=0;
+     int id;
+     int find=0;
+    while(1)
+    {
+        system("clear");
+        pthread_mutex_lock(&mutex6);
+        people_node_t *p;
+        printf("%-20s%-20s\n","id","用户名");
+        List_ForEach(glist,p)
+        {
+            if (p->data.status==0)
+            printf("%-20d%-20s\n",p->data.id,p->data.name);         
+        }
+        pthread_mutex_unlock(&mutex6);
+       
+        printf("输入'1'来刷新状态\n");
+        printf("输入'2'来选择一个群成员(id)\n");
+        printf("输入'3'来退出查看\n");
+        deletemate1:
+        fflush(stdin);
+        scanf("%c",&a);
+        while(getchar()!='\n');
+        switch(a)
+        {
+            case '1':
+            List_Free(glist,people_node_t);
+            struct work temp={'v',0,0,"","",0};
+            temp.sid=gid;
+            send(cfd,&temp,sizeof(struct work),0);
+            printf("I'm waiting for data now\n");
+            sleep(2);
+            break;
+            case '2':
+            printf("id:");
+            fflush(stdin);
+            while(scanf("%d",&id)!=1)
+            {
+                printf("输入的不是一个数字！请重新输入\n");
+                while(getchar()!='\n');
+            }
+            while(getchar()!='\n');
+             pthread_mutex_lock(&mutex6);
+             find=0;
+            List_ForEach(glist,p)
+            {
+                if (p->data.id==id)
+                {
+                    find=1;
+                    if (p->data.status>1)
+                    {
+                        printf("该用户是群主或管理员,不能删除!\n");
+                    }
+                    else{
+                         struct work temp={'x',0,0,"","",0};
+                         temp.sid=gid;
+                         temp.rid=id;
+                         send(cfd,&temp,sizeof(temp),0);
+                    }
+                    break;
+                }    
+            }
+            pthread_mutex_unlock(&mutex6);
+            if (find==0)
+            printf("该用户不是群成员!\n");
+            break;
+            case '3':
+            simple=1;
+            break;
+            default:
+            printf("不是一个合法选项,请重新输入\n");
+           goto deletemate1;
+            break;
+        }
+        if (simple==1)
+        break;
+    }
+}
+void setadmin(int gid,int cfd)
+{
+        char a;
+     int simple=0;
+     int id;
+     int find=0;
+    while(1)
+    {
+        system("clear");
+        pthread_mutex_lock(&mutex6);
+        people_node_t *p;
+        printf("%-20s%-20s\n","id","用户名");
+        List_ForEach(glist,p)
+        {
+            if (p->data.status==0)
+            printf("%-20d%-20s\n",p->data.id,p->data.name);         
+        }
+        pthread_mutex_unlock(&mutex6);
+       
+        printf("输入'1'来刷新状态\n");
+        printf("输入'2'来选择一个群成员(id)\n");
+        printf("输入'3'来退出查看\n");
+        setadmin1:
+        fflush(stdin);
+        scanf("%c",&a);
+        while(getchar()!='\n');
+        switch(a)
+        {
+            case '1':
+            List_Free(glist,people_node_t);
+            struct work temp={'v',0,0,"","",0};
+            temp.sid=gid;
+            send(cfd,&temp,sizeof(struct work),0);
+            printf("I'm waiting for data now\n");
+            sleep(2);
+            break;
+            case '2':
+            printf("id:");
+            fflush(stdin);
+            while(scanf("%d",&id)!=1)
+            {
+                printf("输入的不是一个数字！请重新输入\n");
+                while(getchar()!='\n');
+            }
+            while(getchar()!='\n');
+             pthread_mutex_lock(&mutex6);
+             find=0;
+            List_ForEach(glist,p)
+            {
+                if (p->data.id==id)
+                {
+                    find=1;
+                    if (p->data.status>0)
+                    {
+                        printf("该用户已经是群主或管理员！\n");
+                    }
+                    else{
+                         struct work temp={'w',0,0,"","",0};
+                         temp.sid=gid;
+                         temp.rid=id;
+                         send(cfd,&temp,sizeof(temp),0);
+                    }
+                    break;
+                }    
+            }
+            pthread_mutex_unlock(&mutex6);
+            if (find==0)
+            printf("该用户不是群成员!\n");
+            break;
+            case '3':
+            simple=1;
+            break;
+            default:
+            printf("不是一个合法选项,请重新输入\n");
+           goto setadmin1;
+            break;
+        }
+        if (simple==1)
+        break;
     }
 }
 void managegroup(int cfd)
@@ -1190,6 +1453,10 @@ void getgrequst(group_node_t* temp,int cfd)   //未完成
 }
 void owner(group_node_t* temp,int cfd) //主人
 {
+    int simple=0;
+    struct work temp1;
+    temp1.tye='y';
+    temp1.sid=temp->data.gid;
     while(1)
     {
         own:
@@ -1216,40 +1483,117 @@ void owner(group_node_t* temp,int cfd) //主人
             getgrequst(temp,cfd);
             break;
             case '2':
+            setadmin(temp->data.gid,cfd);
             break;
             case '3':
+            deletemate(temp->data.gid,cfd);
             break;
             case '4':
+            send(cfd,&temp1,sizeof(temp1),0);
+            simple=1;
             break;
             case '5':
+            getgroupmates(temp->data.gid,cfd);
             break;
             case '6':
-            getgroupmates(temp->data.gid,cfd);
+            simple=1;
             break;
             default:
             printf("输入不合法,请重新输入\n");
             goto own;
             break;
         }
+        if (simple==1)
+        break;
     }
 }
 void admin(group_node_t* temp,int cfd)  //管理员
 {
-     system("clear");
-    printf("欢迎你%-20s的管理员\n",temp->data.name);
-    printf("输入'1'来查看验证信息\n");
-    printf("输入'2'来踢出一个群成员\n");
-    printf("输入'3'来退出本群\n");
-    printf("输入'4'来查看群成员\n");
-    printf("输入'5'来退出本界面\n");
+     int simple=0;
+    while(1)
+    {
+       admin1:
+        system("clear");
+        char a;
+        printf("欢迎你%-20s的管理员\n",temp->data.name);
+        printf("输入'1'来查看群验证信息\n");
+        printf("输入'2'来踢出一个群成员\n");
+        printf("输入'3'来查看群成员\n");
+        printf("输入'4'来退出本群聊\n");
+        printf("输入'5'来退出本界面\n");
+        fflush(stdin);
+        if (scanf("%c",&a)!=1)
+        {
+            printf("输入不合法,请重新输入\n");
+            while(getchar()!='\n');
+            goto admin1;
+        }
+        while(getchar()!='\n');
+        switch(a)
+        {
+            case '1':
+            getgrequst(temp,cfd);
+            break;
+            case '2':
+            deletemate(temp->data.gid,cfd);
+            break;
+            case '3':
+            getgroupmates(temp->data.gid,cfd);
+            break;
+            case '4':
+            exitgroup(cfd,temp->data.gid);
+            break;
+            case '5':
+            simple=1;
+            break;
+            default:
+            printf("输入不合法,请重新输入\n");
+            goto admin1;
+            break;
+        }
+        if (simple==1)
+        break;
+    }
 }
 void dog(group_node_t* temp,int cfd) //普通群员
 {
-    system("clear");
-    printf("欢迎你%-20s的群成员\n",temp->data.name);
-    printf("输入'1'来查看群成员\n");
-    printf("输入'2'来退出本群\n");
-    printf("输入'3'来退出本界面\n");
+     int simple=0;
+    while(1)
+    {
+       dog1:
+        system("clear");
+        char a;
+        printf("欢迎你%-20s的管理员\n",temp->data.name);
+        printf("输入'1'来查看群成员\n");
+        printf("输入'2'来退出本群聊\n");
+        printf("输入'3'来退出本界面\n");
+        fflush(stdin);
+        if (scanf("%c",&a)!=1)
+        {
+            printf("输入不合法,请重新输入\n");
+            while(getchar()!='\n');
+            goto dog1;
+        }
+        while(getchar()!='\n');
+        switch(a)
+        {
+            case '1':
+            getgroupmates(temp->data.gid,cfd);
+            break;
+            case '2':
+            exitgroup(cfd,temp->data.gid);
+            break;
+            case '3':
+            simple=1;
+            break;
+            default:
+            printf("输入不合法,请重新输入\n");
+            goto dog1;
+            break;
+        }
+        if (simple==1)
+        break;
+    }
 }
 void managefriend(int cfd)
 {

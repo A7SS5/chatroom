@@ -94,5 +94,8 @@ void managegroup(int cfd);
 void owner(group_node_t* temp,int cfd);
 void admin(group_node_t* temp,int cfd);
 void dog(group_node_t* temp,int cfd);
+void setadmin(int gid,int cfd);
+void exitgroup(int cfd,int gid);
+void deletemate(int gid,int cfd);
 void getgrequst(group_node_t* temp,int cfd);
 #endif

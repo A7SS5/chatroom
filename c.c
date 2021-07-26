@@ -12,8 +12,10 @@ pthread_mutex_t mutex2 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex3 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex4 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex5 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex6 = PTHREAD_MUTEX_INITIALIZER;
 yan_list_t list1=NULL;
 people_list_t list=NULL;
+people_list_t glist=NULL;
 mes_list_t mes1=NULL;
 mes_list_t mes2=NULL;
 group_list_t group1=NULL;
@@ -21,8 +23,9 @@ yan_list_t gyan=NULL;
 int main()
 {
     List_Init(list1,struct yan_node);
-     List_Init(gyan,struct yan_node);
+    List_Init(gyan,struct yan_node);
     List_Init(list,struct people_node);
+    List_Init(glist,struct people_node);
     List_Init(mes1,struct mes_node);
     List_Init(mes2,struct mes_node);
     List_Init(group1,struct group_node);
@@ -132,6 +135,7 @@ int main()
         break;
         case 'h':
         managegroup(cfd);
+        break;
         case 'z':
         simple=1;
         break;

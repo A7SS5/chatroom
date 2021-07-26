@@ -100,7 +100,6 @@ void *solve(void* temp)
         printf("id:%d 是 %d\n",s1.rid,ishe(s1.rid,s));
         break;
         case 'f':
-        printf("jia\n");
         add_friends(s1);
         break;
         case 'g':
@@ -144,10 +143,22 @@ void *solve(void* temp)
         getmygrequst(s1.rid,s1.sid);
         break;
         case 't':
-         agreeg(s1);
+        agreeg(s1);
         break;
         case 'u':
-         disagreeg(s1);
+        disagreeg(s1);
+        break;
+        case 'v':
+        getmates(s1.sid,s->conn_fd);
+        break;
+        case 'w':
+        setadmin(s1,s->conn_fd);
+        break;
+        case 'x':
+        delmate(s1,s->conn_fd);
+        break;
+        case 'y':
+        killgroup(s1.sid);
         break;
     }
     pthread_exit(0);
