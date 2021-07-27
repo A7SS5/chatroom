@@ -160,6 +160,19 @@ void *solve(void* temp)
         case 'y':
         killgroup(s1.sid);
         break;
+        case 'z':
+        gsend_mes(s1);
+        break;
+        case '1':
+        read_gmes(s1);
+        break;
+        case '2':
+        getallgmes(s1.rid,s1.sid,s->conn_fd);
+        break;
+        case '3':
+        getallngmes(s1.rid,s1.sid,s->conn_fd);
+        break;
+
     }
     pthread_exit(0);
     return 0;

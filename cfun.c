@@ -2,11 +2,14 @@
 extern int myid;
 extern int allcansee;
 extern int siliao;
+extern int qunliao;
 extern yan_list_t list1;
 extern people_list_t list;
 extern people_list_t glist;
 extern mes_list_t mes1;
 extern mes_list_t mes2;
+extern mes_list_t gmes1;
+extern mes_list_t gmes2;
 extern group_list_t group1;
 extern yan_list_t gyan;
 
@@ -17,6 +20,8 @@ extern pthread_mutex_t mutex3;
 extern pthread_mutex_t mutex4;
 extern pthread_mutex_t mutex5;
 extern pthread_mutex_t mutex6;
+extern pthread_mutex_t mutex7;
+extern pthread_mutex_t mutex8;
 void getgroupmates(int gid,int cfd)
 {
       char a;
@@ -95,6 +100,8 @@ void *ralt(void* temp)
     int m=0;
     int n=0;
     int o=0;
+    int p=0;
+    int v=0;
     int cfd=*(int *)temp;
     struct work s1;
     people_node_t *new=NULL;
@@ -258,6 +265,48 @@ void *ralt(void* temp)
                 
   //              printf("%-20d%-20s%-20d\n",s1.rid,s1.name,s1.ret);
                 List_AddTail(glist,new);     
+        break;
+        case 't':
+             if (qunliao!=0)
+                {
+                    if (s1.rid==qunliao)
+                    {
+                        printf("sid:%d:name:%s\n %s",s1.sid,s1.name,s1.mes);
+                    }
+                    s1.tye='1';
+                    s1.ret=myid;
+                    send(cfd,&s1,sizeof(s1),0);
+                }
+        if (s1.sid==0) //发送者id不可能为0,表示结束并放开锁
+            {
+                p=0;
+                pthread_mutex_unlock(&mutex7);
+                break;
+            }
+                if (p==0)
+                pthread_mutex_lock(&mutex7);
+                p++;
+                nmes=(mes_node_t*)malloc(sizeof(mes_node_t));
+                nmes->data.sid=s1.sid;  //发送者
+                nmes->data.rid=s1.rid;  //群聊id
+                strcpy(nmes->data.mes,s1.mes);           
+  //              printf("%-20d%-20s%-20d\n",s1.rid,s1.name,s1.ret);
+                List_AddTail(gmes1,nmes);  
+        break;
+        case 'u':
+        if (s1.sid==0) //发送者id不可能为0,表示结束并放开锁
+            {
+                v=0;
+                pthread_mutex_unlock(&mutex8);
+                break;
+            }
+                if (v==0)
+                pthread_mutex_lock(&mutex8);
+                v++;
+                lmes=(mes_node_t*)malloc(sizeof(mes_node_t));
+                lmes->data.sid=s1.sid;
+                strcpy(lmes->data.mes,s1.mes);
+                List_AddTail(gmes2,lmes); 
         break;
         }
     }
@@ -569,12 +618,35 @@ int ismyfriend(int id)
     }
     return 0;
 }
+int ismygroup(int gid)
+{
+     group_node_t*p;
+    List_ForEach(group1,p)
+    {
+        if (p->data.gid==gid)
+        return 1;
+
+    }
+    return 0;
+}
 char *getname(int id) //找到名字，未测试，就个遍历应该没问题
 {
     people_node_t*p;
     List_ForEach(list,p)
     {
         if (p->data.id==id)
+        return p->data.name;
+
+    }
+    printf("error\n");
+    return NULL;
+}
+char *getgname(int id) //找到名字，未测试，就个遍历应该没问题
+{
+    group_node_t*p;
+    List_ForEach(group1,p)
+    {
+        if (p->data.gid==id)
         return p->data.name;
 
     }
@@ -967,6 +1039,25 @@ void readsmes(int cfd)
         break;
     }
     
+} 
+void readgmes(int cfd,int gid)
+{
+   mes_node_t *q;
+   char *a;
+   system("clear");
+    a=getgname(gid);
+    printf("群组id：%d 群组名:%s\n",gid,a);
+    pthread_mutex_lock(&mutex8);
+    List_ForEach(gmes2,q)
+    {
+            printf("id: %d\n",q->data.sid);
+            printf("%s",q->data.mes);
+
+    }
+    pthread_mutex_unlock(&mutex8);
+    printf("输入回车键返回上层界面\n");
+    while(getchar()!='\n');
+    
 }  
 void nreadsmes(int cfd)
 {
@@ -1038,6 +1129,43 @@ void nreadsmes(int cfd)
         }
 
 }
+void nreadgmes(int cfd,int gid)
+{
+    group_node_t *p;
+    mes_node_t *q;
+    int i=0;
+    system("clear");
+    struct work test;
+     test.tye='1';
+      test.ret=myid;
+    printf("%-20s%-20s%-20s\n","gid","群组名","消息数");
+    List_ForEach(group1,p)
+    {
+        i=0;
+        pthread_mutex_lock(&mutex7);
+        List_ForEach(gmes1,q)
+        {
+            if (q->data.sid==p->data.gid)
+            i++;
+        }
+        pthread_mutex_unlock(&mutex7);
+        printf("%-20d%-20s%-20d\n",p->data.gid,getgname(p->data.gid),i);
+    }
+      List_ForEach(gmes1,q)
+        {
+            if (q->data.rid==gid)
+            {
+                test.sid=q->data.sid;
+                test.rid=q->data.rid;
+                strcpy(test.mes,q->data.mes);
+                send(cfd,&test,sizeof(test),0);
+                printf("id:%d:\n %s",q->data.sid,q->data.mes);
+            }
+        }
+        printf("输入回车返回上层界面\n");
+        while(getchar()!='\n');
+
+}
 void fetchallmes(int cfd)
 {
     int simple=0;
@@ -1104,6 +1232,69 @@ void chatwithf(int cfd)
         send(cfd,&mes,sizeof(mes),0);
     }
     siliao=0;
+}
+void chatwithg(int cfd)
+{
+    int gid;
+    printf("请输入你想进入的群组id号\n");
+    fflush(stdin);
+    if(scanf("%d",&gid)!=1)
+    {
+        printf("输入的不是一个数字！\n");
+        return;
+    }
+    while(getchar()!='\n');
+    if (!ismygroup(gid))
+    {
+        printf("您还未加入该群组!\n");
+        return;
+    }
+    char *name=getgname(gid);
+    struct work mes;
+    qunliao=gid;
+    mes.rid=gid;mes.sid=myid;mes.tye='z';mes.ret=0; //k为发送消息包，并通过ret=0代表此消息对方未读.
+    printf("你正在群聊id:%d %s中,输入exit来退出\n",gid,name);
+    while(fgets(mes.mes,1000,stdin))
+    {
+        printf("your send:\n");
+        if (strcmp(mes.mes,"exit\n")==0)
+        {
+            break;
+        }
+        send(cfd,&mes,sizeof(mes),0);
+    }
+    qunliao=0;
+}
+void fetchallgmes(int cfd,int gid)
+{
+    int simple=0;
+    char a;
+    while(1)
+    {
+        printf("输入'1'来查看未读消息\n");
+        printf("输入'2'来查看已读消息\n");
+        printf("输入'3'来退出消息记录\n");
+        fflush(stdin);
+        scanf("%c",&a);
+        while(getchar()!='\n');
+        switch(a)
+        {
+            case '1':
+            nreadgmes(cfd,gid);
+            break;
+            case '2':
+            readgmes(cfd,gid);
+            break;
+            case '3':
+            simple=1;
+            break;
+            default:
+            printf("不是一个合法选项请重新输入\n");
+            break;
+        }
+        if (simple==1)
+            break;
+    }
 }
 void joingroup(int cfd)
 {
@@ -1594,6 +1785,47 @@ void dog(group_node_t* temp,int cfd) //普通群员
         if (simple==1)
         break;
     }
+}
+void grouphistory(int cfd)
+{
+   struct group_node *p;
+    int id;
+    grouph:
+    system("clear");
+    int i=0;
+    printf("%-20s%-20s\n","群组id","群组名称");
+    pthread_mutex_lock(&mutex4);
+    List_ForEach(group1,p)
+    {
+        printf("%-20d%-20s\n",p->data.gid,p->data.name);
+    }
+    pthread_mutex_unlock(&mutex4);
+    printf("请输入你要查看记录的群组id:\n");
+    fflush(stdin);
+    while(scanf("%d",&id)!=1)
+    {
+        printf("输入的不是有效的id!请重新输入\n");
+        while(getchar()!='\n');
+        goto grouph;
+    }
+    while(getchar()!='\n');
+    List_ForEach(group1,p)
+    {
+       if (p->data.gid==id)
+       {
+           i=1;
+           break;
+       }
+    }
+    if (i==0)
+    {
+        printf("输入的不是有效的id!请重新输入\n");
+        goto grouph;
+    }
+    struct work temp;
+    temp.tye='2';temp.sid=myid;temp.rid=id;send(cfd,&temp,sizeof(temp),0);
+    temp.tye='3';send(cfd,&temp,sizeof(temp),0);
+    fetchallgmes(cfd,id);
 }
 void managefriend(int cfd)
 {
