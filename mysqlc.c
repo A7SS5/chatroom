@@ -312,12 +312,86 @@ int use_mysql_21(int gid,int cfd,MYSQL mysql1)
 	}
 	return 0;
 }
+int use_mysql_27(int gid,int sid,int cfd,MYSQL mysql1)
+{
+		
+	char string[120];
+	sprintf(string,"select sid,gmes from gmes where rid=%d and gid =%d and type=1",sid,gid);
+	printf("%s\n",string);
+	int                 i;
+	int                 ret;
+	unsigned int        num_rows;
+	MYSQL               mysql = mysql1;
+	MYSQL_RES           *result = NULL;
+	MYSQL_ROW           row;
+	struct work temp={'u',0,0,"","",0};
+	
+//	mysql_query(&mysql,"use etc");
+	ret = mysql_query(&mysql, string);
+	if(!ret){
+		result = mysql_store_result(&mysql);
+		if(result){
+					while((row = mysql_fetch_row(result))){
+					temp.sid=atoi(row[0]);
+					strcpy(temp.mes,row[1]);
+					send(cfd,&temp,sizeof(temp),0);
+					}
+					temp.sid=0;
+					send(cfd,&temp,sizeof(temp),0);
+				}
+				printf("\n");		
+		mysql_free_result(result);
+	}
+	else{
+		printf("query fail\n");
+		return -1;
+	}
+	return 0;
+}
+int use_mysql_28(int gid,int sid,int cfd,MYSQL mysql1)
+{
+		
+	char string[120];
+	sprintf(string,"select sid,gid,gmes from gmes where rid=%d and type=0",sid);
+	printf("%s\n",string);
+	int                 i;
+	int                 ret;
+	unsigned int        num_rows;
+	MYSQL               mysql = mysql1;
+	MYSQL_RES           *result = NULL;
+	MYSQL_ROW           row;
+	struct work temp={'t',0,0,"","",0};
+	
+//	mysql_query(&mysql,"use etc");
+	ret = mysql_query(&mysql, string);
+	if(!ret){
+		result = mysql_store_result(&mysql);
+		if(result){
+					while((row = mysql_fetch_row(result))){
+
+					temp.sid=atoi(row[0]);
+					temp.rid=atoi(row[1]);
+					strcpy(temp.mes,row[2]);
+					send(cfd,&temp,sizeof(temp),0);
+					}
+					temp.sid=0;
+					send(cfd,&temp,sizeof(temp),0);
+				}
+				printf("\n");		
+		mysql_free_result(result);
+	}
+	else{
+		printf("query fail\n");
+		return -1;
+	}
+	return 0;
+}
 int use_mysql_24(int gid,MYSQL mysql1) //还没完，把聊天记录也一删除
 {
 	char string[60];
 	char string1[60];
 	sprintf(string,"delete from groupmates where gid=%d",gid);
-	sprintf(string,"delete from grouplist where gid=%d",gid);
+	sprintf(string1,"delete from grouplist where gid=%d",gid);
 	printf("%s\n",string);
 	MYSQL mysql=mysql1;
 	MYSQL_RES *result=NULL;
@@ -659,6 +733,26 @@ int use_mysql_12(struct work temp,MYSQL mysql1)
 	}
 
 }
+int use_mysql_26(struct work temp,MYSQL mysql1)
+{
+	char string[1200];
+	sprintf(string,"update gmes set type = 1 where sid=%d and rid=%d and gid=%d and gmes=\"%s\"",temp.sid,temp.ret,temp.rid,temp.mes);
+	printf("%s\n",string);
+	MYSQL mysql=mysql1;
+	MYSQL_RES *result=NULL;
+	MYSQL_ROW row;
+	int ret;
+	ret=mysql_query(&mysql,string);
+	if (!ret)
+	{
+		return 1;
+	}
+	else{
+		printf("query error\n");
+		return -1;
+	}
+
+}
 int use_mysql_11(struct work temp,MYSQL mysql1)
 {
 	char string[1200];
@@ -783,6 +877,62 @@ int use_mysql_15(struct work temp,MYSQL mysql1)
 	}
 	else{
 		printf("query fail %s\n",string);
+		return -1;
+	}
+	return 0;
+}
+int use_mysql_25(struct work s1,MYSQL mysql1)
+{
+		
+	char string[120];
+	char string1[1300];
+	sprintf(string,"select distinct pid,用户名 from groupmates,用户数据 where gid=%d and pid=uid;",s1.rid);
+	printf("%s\n",string);
+	int                 ret;
+	int id;
+	MYSQL               mysql = mysql1;
+	MYSQL_RES           *result = NULL;
+	MYSQL_ROW           row;
+	struct work temp={'t',0,0,"","",0};
+	
+//	mysql_query(&mysql,"use etc");
+	ret = mysql_query(&mysql, string);
+	if(!ret){
+		result = mysql_store_result(&mysql);
+		if(result){
+					int send_fd;
+					while((row = mysql_fetch_row(result))){
+							temp.ret=0;
+							id=atoi(row[0]);
+							if (id==s1.sid)
+							{temp.ret=1;
+							}
+							else{
+							if (getstatus(id))
+								{
+									temp.sid=s1.sid;
+									temp.rid=s1.rid;
+									strcpy(temp.name,row[1]);
+									strcpy(temp.mes,s1.mes);
+									send_fd=getcfd(id);
+									send(send_fd,&temp,sizeof(temp),0);
+								}
+							}
+							sprintf(string1,"insert into gmes values(0,%d,%d,%d,\"%s\",%d)",s1.rid,s1.sid,id,s1.mes,temp.ret);
+							if (mysql_query(&mysql, string1))
+								{
+									printf("query fail\n");
+									return -1;
+								}
+							}
+					temp.sid=0;
+					send(send_fd,&temp,sizeof(temp),0);
+				}
+				printf("\n");		
+		mysql_free_result(result);
+	}
+	else{
+		printf("query fail\n");
 		return -1;
 	}
 	return 0;
@@ -963,11 +1113,25 @@ void ssend_mes(struct work temp)
 	ret=use_mysql_11(temp,a);
     close_mysql(a);
 }
+void gsend_mes(struct work s1)
+{
+	MYSQL a;
+    a=accept_mysql();
+	use_mysql_25(s1,a);
+    close_mysql(a);
+}
 void read_mes(struct work temp)
 {
 	MYSQL a;
     a=accept_mysql();
     use_mysql_12(temp,a);
+    close_mysql(a);
+}
+void read_gmes(struct work s1)
+{
+		MYSQL a;
+    a=accept_mysql();
+    use_mysql_26(s1,a);
     close_mysql(a);
 }
 void sendallmes(int id)
@@ -978,6 +1142,20 @@ void sendallmes(int id)
     use_mysql_13(id,a);
     close_mysql(a);
  }
+void getallgmes(int gid,int sid,int cfd)
+{
+	MYSQL a;
+    a=accept_mysql();
+    use_mysql_27(gid,sid,cfd,a);
+    close_mysql(a);
+}
+void getallngmes(int gid,int sid,int cfd)
+{
+	MYSQL a;
+    a=accept_mysql();
+    use_mysql_28(gid,sid,cfd,a);
+    close_mysql(a);
+}
 void getallnmes(int id)
 {
 	MYSQL a;
