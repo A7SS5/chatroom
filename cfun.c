@@ -176,7 +176,8 @@ void *ralt(void* temp)
         {
             if (s1.sid==siliao)
             {
-                printf("                                        %-s",s1.mes);
+                printf("\n                                        %s:%d\n","id:",s1.sid);
+                printf("                                        %-45s\n",s1.mes);
             }
             s1.tye='l';
             send(cfd,&s1,sizeof(s1),0);
@@ -462,8 +463,8 @@ void yanzheng(int cfd)
          struct work temp;
         if (p->data.xu==id)
         {
-             printf("%-20s%-20s%-20s%-20s\n","序号","id","用户名","种类");
-            printf("%-20d%-20d%-20s",p->data.xu,p->data.sid,p->data.name);
+             printf("                        %-20s%-20s%-20s%-20s\n","序号","id","用户名","种类");
+            printf("                        %-20d%-20d%-20s",p->data.xu,p->data.sid,p->data.name);
              if (p->data.type==1)
             {
                 printf("%-20s\n","申请");
@@ -489,6 +490,7 @@ void yanzheng(int cfd)
                 temp.ret=p->data.type;
                 printf("已发送处理请求\n");
                 send(cfd,&temp,sizeof(temp),0);
+                return;
                 break;
                 case '2':
                 temp.tye='i';
@@ -497,6 +499,7 @@ void yanzheng(int cfd)
                 temp.ret=p->data.type;
                 printf("已发送处理请求\n");
                 send(cfd,&temp,sizeof(temp),0);
+                return;
                 break;
                 default:
                 printf("不是一个合法选项，请重新输入\n");
@@ -506,7 +509,7 @@ void yanzheng(int cfd)
             break;
         }
     }
-    
+    printf("无效的序号\n");
 
 }
 void fetchallfriend(int cfd)
@@ -562,25 +565,12 @@ void fetchallfriend(int cfd)
 void add_friend(int cfd)
 {
     int id;
-    char a;
-    int simple=0;
-    while(1)
-    {
-    printf("输入'1'来添加\n");
-    printf("输入'2'来退出查看\n");
-    getfriend1:
-    fflush(stdin);
-    scanf("%c",&a);
-    while(getchar()!='\n');
-    switch(a)
-        {
-            case '1':
             printf("请输入你想添加的id号\n");
             fflush(stdin);
             if(scanf("%d",&id)!=1)
             {
                 printf("输入的不是一个数字！\n");
-                break;
+               
             }
             while(getchar()!='\n');
             if (ismyfriend(id))
@@ -609,18 +599,9 @@ void add_friend(int cfd)
             {
                 printf("id:%d 用户不存在\n",id);
             }
-            break;
-            case '2':
-            simple=1;
-            break;
-            default:
-            printf("%c不是一个合法选项,请重新输入\n",a);
-            goto getfriend1;
-                break;
-        }
-        if (simple==1)
-        break;
-    }
+    
+        
+
    
 }
 void delete_friend(int cfd)
@@ -714,13 +695,14 @@ void getrequst(int cfd)
     int simple=0;
     while(1)
     {
-   //     system("clear");
+        system("clear");
+         printf("============================ 好友管理 ============================\n");
         pthread_mutex_lock(&mutex1);
         yan_node_t *p;
-        printf("%-20s%-20s%-20s%-20s\n","序号","id","用户名","种类");
+        printf("                        %-20s%-20s%-20s%-20s\n","序号","id","用户名","种类");
         List_ForEach(list1,p)
         {
-            printf("%-20d%-20d%-20s",p->data.xu,p->data.sid,p->data.name);
+            printf("                        %-20d%-20d%-20s",p->data.xu,p->data.sid,p->data.name);
             if (p->data.type==1)
             {
                 printf("%-20s\n","申请");
@@ -762,6 +744,8 @@ void getrequst(int cfd)
         }
         if (simple==1)
         break;
+        printf("输入回车来继续\n");
+        while(getchar()!='\n');
     }
 }
 int logon(struct work temp,int cfd)
@@ -841,7 +825,7 @@ void creategroup(int cfd)
 }
 int SysLogin(int efd)  // SL界面
 {
-    system("clear");
+   
     struct work test={'a',0,0,"","",0};
     int i = 0;
     int j = 0;
@@ -851,9 +835,11 @@ int SysLogin(int efd)  // SL界面
     char password[30];
     while (i <= 3)
     {
-        printf("                                    登录界面\n");
-    add_usr:
-        printf("                              用户名:");
+        add_usr:
+        system("clear");
+        printf("============================ 登陆界面 ============================\n");
+   
+        printf("                      用户名:");
         j = 0;
         while ((n = getchar()) != '\n')
         {
@@ -861,8 +847,10 @@ int SysLogin(int efd)  // SL界面
             {
                 while ((n = getchar()) != '\n');
                 
-                printf("用户名不合规\n");
+                printf("用户名不合规,请在回车后继续\n");
+                while(getchar()!='\n');
                 j = 0;
+                
                 goto add_usr;
             }
             usrname[j++] = n;
@@ -876,7 +864,7 @@ int SysLogin(int efd)  // SL界面
         usrname[j] = '\0';
 
     add_pass_1:
-        printf("                              密码:");
+        printf("                      密码:");
         j = 0;
         while ((n = getch()) != '\n')
         {
@@ -951,9 +939,11 @@ int SysLogon(int efd)
     char password[30];
     while (1)
     {
-        printf("                                    注册界面\n");
-    add_usr:
-        printf("                              用户名:");
+         add_usr:
+         system("clear");
+        printf("============================ 注册界面 ============================\n");
+
+        printf("                      用户名:");
         j = 0;
         while ((n = getchar()) != '\n')
         {
@@ -961,7 +951,8 @@ int SysLogon(int efd)
             {
                 while ((n = getchar()) != '\n');
                 
-                printf("用户名不合规\n");
+                printf("用户名不合规,请在回车后继续\n");
+                while(getchar()!='\n');
                 j = 0;
                 goto add_usr;
             }
@@ -976,7 +967,7 @@ int SysLogon(int efd)
         usrname[j] = '\0';
 
     add_pass_1:
-        printf("                              密码:");
+        printf("                      密码:");
         j = 0;
         while ((n = getch()) != '\n')
         {
@@ -1031,13 +1022,26 @@ int SysLogon(int efd)
 }
 void readsmes(int cfd)
 {
-   mes_node_t *q;
    char *a;
    int id;
    char n;
+     people_node_t *p;
+    mes_node_t *q;
+    int i=0;
    readsmes1:
    system("clear");
         printf("============================ 聊天记录 ============================\n");
+        printf("                        %-20s%-20s%-20s\n","id","用户名","消息数");
+        List_ForEach(list,p)
+        {
+            i=0;
+            List_ForEach(mes2,q)
+            {
+                if (q->data.sid==p->data.id)
+                i++;
+            }
+            printf("                        %-20d%-20s%-20d\n",p->data.id,p->data.name,i);
+        }
     printf("请选择你要读取的用户(id)\n");
     fflush(stdin);
     while(scanf("%d",&id)!=1)
@@ -1214,8 +1218,11 @@ void fetchallmes(int cfd)
 {
     int simple=0;
      char a;
+     struct work temp;
     while(1)
     {
+         temp.tye='m';
+     send(cfd,&temp,sizeof(struct work),0);
          system("clear");
         printf("============================ 欢迎使用聊天室 ============================\n");
         printf("                        输入'1'来查看未读消息\n");
@@ -1273,7 +1280,7 @@ void chatwithf(int cfd)
     {
         printf("当前对方不在线\n");
     }
-     printf("your send:                                         %-s:\n",name);
+     printf("your send: ");
     while(fgets(mes.mes,1000,stdin))
     {
  //       printf("your send:\n");
@@ -1322,7 +1329,7 @@ void fetchallgmes(int cfd,int gid)
     int simple=0;
     char a;
     while(1)
-    {
+    {system("clear");
         printf("输入'1'来查看未读消息\n");
         printf("输入'2'来查看已读消息\n");
         printf("输入'3'来退出消息记录\n");
@@ -2080,11 +2087,13 @@ void managefriend(int cfd)
     int simple=0;
     while(1)
     {
+        system("clear");
+          printf("============================ 好友管理 ============================\n");
         char a;
-        printf("输入'1'来添加一个好友\n");
-        printf("输入'2'来删除一个好友\n");
-        printf("输入'3'来查看验证消息\n");
-        printf("输入'4'来返回上层界面\n");
+        printf("                        输入'1'来添加一个好友\n");
+        printf("                        输入'2'来删除一个好友\n");
+        printf("                        输入'3'来查看验证消息\n");
+        printf("                        输入'4'来返回上层界面\n");
         fflush(stdin);
         scanf("%c",&a);
         while(getchar()!='\n');
@@ -2103,9 +2112,11 @@ void managefriend(int cfd)
             simple=1;
             break;
             default:
-            printf("不是一个合法选项请重新输入\n");
+            printf("不是一个合法选项\n");
             break;
         }
+         printf("按回车后继续\n");
+         while(getchar()!='\n');
         if (simple==1)
             break;
     }
