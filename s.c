@@ -61,10 +61,16 @@ void mylogon(struct work s1,struct s1* s)
 }
 void *solve(void* temp)
 {
+    int out;
     struct work s1;
+    char buf[2000];
+    int num;
+        struct s1 *s=(struct s1*)temp;
     pthread_detach(pthread_self());
     struct epoll_event ev;
-    struct s1 *s=(struct s1*)temp;
+    ev.data.fd = s->conn_fd;
+     char *filename;
+    ev.events = EPOLLIN | EPOLLONESHOT;
     printf("efd:%d cfd:%d\n",s->epfd,s->conn_fd);
     int ret = recv(s->conn_fd,&s1,sizeof(s1),0);
     if (ret==0)
@@ -172,13 +178,38 @@ void *solve(void* temp)
         case '3':
         getallngmes(s1.rid,s1.sid,s->conn_fd);
         break;
-
+        case '4':
+      //  epoll_ctl(s->epfd,EPOLL_CTL_DEL,s->conn_fd,NULL);
+        filename=genRandomString(4);
+        out=creat(filename,0664);
+        int len=s1.ret;
+        while(len>0 ){
+            num=recv(s->conn_fd,buf,1024,0); 
+            len=len-num;
+            write(out,buf,num);
+        	memset(buf,'\0',sizeof(buf));
+        }
+        savefile(s1,filename);
+        close(out);
+        break;
+        case '5':
+        sendfilelist(s1);
+        break;
+        case '6':
+        send_file(s1);
+        break;
+        case '7':
+        delete_file(s1);
+        break;
     }
+    epoll_ctl(s->epfd, EPOLL_CTL_MOD,s->conn_fd, &ev);
+     printf("结束\n");
     pthread_exit(0);
     return 0;
 }
 int main()
 {
+    signal(SIGPIPE,SIG_IGN);
     List_Init(list,people_node_t);
     struct sockaddr_in cliaddr,servaddr;
     socklen_t cliaddr_len;
@@ -231,8 +262,9 @@ int main()
                  connect_size++;
                  printf("received from %s at PORT %d\n",inet_ntop(AF_INET,&cliaddr.sin_addr,str,sizeof(str)),ntohs(cliaddr.sin_port));
                 
+
                 ev.data.fd= conn_fd;
-                ev.events =EPOLLIN|EPOLLRDHUP;
+                ev.events =EPOLLIN | EPOLLONESHOT | EPOLLRDHUP;
                 epoll_ctl(epfd,EPOLL_CTL_ADD,conn_fd,&ev);
 
             }

@@ -43,6 +43,64 @@ char* getname(int id)
 	}
 	return NULL;
 }
+
+
+ssize_t						/* Read "n" bytes from a descriptor. */
+readn(int fd, void *vptr, size_t n)
+{
+	size_t	nleft;
+	ssize_t	nread;
+	char	*ptr;
+ 
+	ptr = vptr;
+	nleft = n;
+	while (nleft > 0) {
+		if ( (nread = read(fd, ptr, nleft)) < 0) {
+			if (errno == EINTR)
+				nread = 0;		/* and call read() again */
+			else
+				return(-1);
+		} else if (nread == 0)
+			break;				/* EOF */
+ 
+		nleft -= nread;
+		ptr   += nread;
+	}
+	return(n - nleft);		/* return >= 0 */
+}
+char* genRandomString(int length)
+{
+	int flag, i;
+	char* string;
+	srand((unsigned) time(NULL ));
+	if ((string = (char*)malloc(length)) == NULL )
+	{
+		perror("Malloc failed!flag:14\n");
+		return NULL ;
+	}
+ 
+	for (i = 0; i < length - 1; i++)
+	{
+		flag = rand() % 3;
+		switch (flag)
+		{
+			case 0:
+				string[i] = 'A' + rand() % 26;
+				break;
+			case 1:
+				string[i] = 'a' + rand() % 26;
+				break;
+			case 2:
+				string[i] = '0' + rand() % 10;
+				break;
+			default:
+				string[i] = 'x';
+				break;
+		}
+	}
+	string[length - 1] = '\0';
+	return string;
+}
 int getcfd(int id) //遍历链表查找在线人的fd
 {
 	people_node_t* p;
@@ -340,6 +398,153 @@ int use_mysql_27(int gid,int sid,int cfd,MYSQL mysql1)
 					send(cfd,&temp,sizeof(temp),0);
 				}
 				printf("\n");		
+		mysql_free_result(result);
+	}
+	else{
+		printf("query fail\n");
+		return -1;
+	}
+	return 0;
+}
+int use_mysql_29(struct work s1,char *filename,MYSQL mysql1)
+{
+		
+	char string[120];
+	sprintf(string,"insert into file values(0,%d,%d,\"%s\",\"%s\",%d,0)",s1.sid,s1.rid,s1.name,filename,s1.ret);
+	printf("%s\n",string);
+	int                 i;
+	int                 ret;
+	unsigned int        num_rows;
+	MYSQL               mysql = mysql1;
+	MYSQL_RES           *result = NULL;
+	MYSQL_ROW           row;
+	struct work temp={'v',0,0,"","",0};
+	temp.sid=s1.sid,strcpy(temp.name,s1.name);
+	temp.ret=s1.ret;temp.rid=0;//暂时用rid承担是否已下载过
+//	mysql_query(&mysql,"use etc");
+	ret = mysql_query(&mysql, string);
+	if(!ret){
+		if (getstatus(s1.rid))
+		{
+			send(getcfd(s1.rid),&temp,sizeof(temp),0);
+		}
+	}
+	else{
+		printf("query fail\n");
+		return -1;
+	}
+	return 0;
+}
+int use_mysql_30(int sid,MYSQL mysql1)
+{
+		
+	char string[120];
+	int cfd=getcfd(sid);
+	sprintf(string,"select sid,filename,address,size,type from file where rid=%d",sid);
+	printf("%s\n",string);
+	int                 i;
+	int                 ret;
+	unsigned int        num_rows;
+	MYSQL               mysql = mysql1;
+	MYSQL_RES           *result = NULL;
+	MYSQL_ROW           row;
+	struct work temp={'v',0,0,"","",0};
+	ret = mysql_query(&mysql, string);
+	if(!ret){
+			result = mysql_store_result(&mysql);
+			if (result)
+			{	
+				while((row=mysql_fetch_row(result)))
+				{
+				temp.sid=atoi(row[0]);
+				temp.rid=atoi(row[4]);
+				temp.ret=atoi(row[3]);
+				strcpy(temp.name,row[1]);
+				send(cfd,&temp,sizeof(temp),0);
+				}
+				temp.sid=0;
+				send(cfd,&temp,sizeof(temp),0);
+			}
+			mysql_free_result(result);
+
+	}
+	else{
+		printf("query fail\n");
+		return -1;
+	}
+	return 0;
+}
+int use_mysql_31(struct work s1,MYSQL mysql1)
+{
+		
+	char string[120];
+	char string1[120];
+	sprintf(string,"select id,address from file where sid=%d and rid=%d and filename=\"%s\" and size=%d",s1.sid,s1.rid,s1.name,s1.ret);
+	printf("%s\n",string);
+	int                 i;
+	int id;
+	int fd;
+	int                 ret;
+	unsigned int        num_rows;
+	MYSQL               mysql = mysql1;
+	MYSQL_RES           *result = NULL;
+	MYSQL_ROW           row;
+	struct work temp=s1;
+	temp.tye='w';
+	send(getcfd(s1.rid),&temp,sizeof(temp),0);
+	ret = mysql_query(&mysql, string);
+	if(!ret){
+		result=mysql_store_result(&mysql);
+		if (result)
+		{
+			row=mysql_fetch_row(result);
+			id=atoi(row[0]);
+			sprintf(string1,"update file set type=1 where id=%d",id);
+			mysql_query(&mysql, string1);
+			fd=open(row[1],O_RDONLY,0664);
+			if (fd==-1)
+			{
+				printf("open %s\n failed\n",row[1]);
+				perror("open");
+			}
+			struct stat stat_buf;
+			fstat(fd,&stat_buf);
+			sendfile(getcfd(s1.rid),fd,NULL,stat_buf.st_size);
+		}
+		mysql_free_result(result);
+	}
+	else{
+		printf("query fail\n");
+		return -1;
+	}
+	return 0;
+}
+int use_mysql_32(struct work s1,MYSQL mysql1) //搁置
+{
+		
+char string[120];
+	char string1[120];
+	sprintf(string,"select id,address from file where sid=%d and rid=%d and filename=\"%s\" and size=%d",s1.sid,s1.rid,s1.name,s1.ret);
+	printf("%s\n",string);
+	int                 i;
+	int id;
+	int fd;
+	int                 ret;
+	unsigned int        num_rows;
+	MYSQL               mysql = mysql1;
+	MYSQL_RES           *result = NULL;
+	MYSQL_ROW           row;
+	ret = mysql_query(&mysql, string);
+	if(!ret){
+		result=mysql_store_result(&mysql);
+		if (result)
+		{
+			row=mysql_fetch_row(result);
+			id=atoi(row[0]);
+			sprintf(string1,"delete from file where id=%d",id);
+			mysql_query(&mysql, string1);
+			remove(row[1]);
+		}
 		mysql_free_result(result);
 	}
 	else{
@@ -1192,6 +1397,13 @@ void getmates(int gid,int cfd)
     ret=use_mysql_21(gid,cfd,a);
     close_mysql(a);
 }
+void savefile(struct work s1,char *filename)
+{
+	MYSQL a;
+    a=accept_mysql();
+    use_mysql_29(s1,filename,a);
+    close_mysql(a);
+}
 void setadmin(struct work s1,int cfd)
 {
 	MYSQL a;
@@ -1211,6 +1423,27 @@ void killgroup(int gid)
 	MYSQL a;
     a=accept_mysql();
     use_mysql_24(gid,a);
+    close_mysql(a);
+}
+void sendfilelist(struct work s1)
+{
+	MYSQL a;
+    a=accept_mysql();
+    use_mysql_30(s1.sid,a);
+    close_mysql(a);
+}
+void send_file(struct work s1)   //搁置
+{
+	MYSQL a;
+    a=accept_mysql();
+    use_mysql_31(s1,a);
+    close_mysql(a);
+}
+void delete_file(struct work s1) //搁置
+{
+	MYSQL a;
+    a=accept_mysql();
+    use_mysql_32(s1,a);
     close_mysql(a);
 }
 int ishe(int id,struct s1 *s) //判断是否存在id

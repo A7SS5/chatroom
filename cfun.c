@@ -6,6 +6,7 @@ extern int qunliao;
 extern yan_list_t list1;
 extern people_list_t list;
 extern people_list_t glist;
+extern file_list_t flist;
 extern mes_list_t mes1;
 extern mes_list_t mes2;
 extern mes_list_t gmes1;
@@ -22,6 +23,7 @@ extern pthread_mutex_t mutex5;
 extern pthread_mutex_t mutex6;
 extern pthread_mutex_t mutex7;
 extern pthread_mutex_t mutex8;
+extern pthread_mutex_t mutex9;
 void getgroupmates(int gid,int cfd)
 {
       char a;
@@ -98,14 +100,17 @@ void *ralt(void* temp)
     int k=0;
     int l=0;
     int m=0;
+    int out;
     int n=0;
     int o=0;
     int p=0;
     int v=0;
+    int q=0;
     int cfd=*(int *)temp;
     struct work s1;
     people_node_t *new=NULL;
     yan_node_t *old=NULL;
+    file_node_t *file1=NULL;
     mes_node_t *nmes=NULL;
     mes_node_t *lmes=NULL;
     group_node_t *g=NULL;
@@ -307,6 +312,39 @@ void *ralt(void* temp)
                 lmes->data.sid=s1.sid;
                 strcpy(lmes->data.mes,s1.mes);
                 List_AddTail(gmes2,lmes); 
+        break;
+        case 'v':
+             if (s1.sid==0)
+            {
+                q=0;
+                pthread_mutex_unlock(&mutex9);
+                break;
+            }
+                if (q==0)
+                pthread_mutex_lock(&mutex9);
+                q++;
+                file1=(file_node_t*)malloc(sizeof(file_node_t));
+                file1->data.id=q;
+                file1->data.sid=s1.sid;
+                strcpy(file1->data.name,s1.name);
+                file1->data.status=s1.rid;
+                file1->data.size=s1.ret;         
+  //              printf("%-20d%-20s%-20d\n",s1.rid,s1.name,s1.ret);
+                List_AddTail(flist,file1);     
+        break;
+        case 'w':
+         out=creat(s1.name,0664);
+        int len=s1.ret;
+        char buf[1024];
+        int num;
+        while(len>0 ){
+            num=recv(cfd,buf,1024,0); 
+            len=len-num;
+            write(out,buf,num);
+        	memset(buf,'\0',sizeof(buf));
+        }
+
+        close(out);
         break;
         }
     }
@@ -1826,6 +1864,185 @@ void grouphistory(int cfd)
     temp.tye='2';temp.sid=myid;temp.rid=id;send(cfd,&temp,sizeof(temp),0);
     temp.tye='3';send(cfd,&temp,sizeof(temp),0);
     fetchallgmes(cfd,id);
+}
+void transfile(int cfd)
+{
+    char choice;
+    int simple=0;
+    while(1)
+    {
+        printf("输入'1'来查看待接收的文件\n");
+        printf("输入'2'来发送一个文件\n");
+        printf("输入'3'来退出出此界面\n");
+        fflush(stdin);
+        while(scanf("%c",&choice)!=1)
+        {
+            printf("输入不正确,请重新输入\n");
+            while(getchar()!='\n');
+        }
+        while(getchar()!='\n');
+        switch(choice)
+        {
+            case '1':
+            rfile(cfd);
+            break;
+            case '2':
+            sfile(cfd);
+            break;
+            case '3':
+            simple=1;
+            break;
+            default:
+             printf("输入不正确,请重新输入\n");
+            break;
+        }
+        if (simple==1)
+        break;
+    }
+}
+void sfile(int cfd)
+{
+    int id;
+    int fd;
+    char filename[30];
+    printf("输入你想传输的对象id号\n");
+    scanf("%d",&id);getchar();
+    printf("请输入正确的文件地址\n");
+    scanf("%s",filename);getchar();
+    struct work temp;
+    temp.sid=myid;
+    temp.rid=id;
+    temp.tye='4';
+    fd=open(filename,O_RDONLY,0664);
+    if (fd==-1)
+    {
+        printf("open %s\n failed\n",filename);
+        perror("open");
+    }
+    struct stat stat_buf;
+    fstat(fd,&stat_buf);
+    temp.ret=stat_buf.st_size;
+    strcpy(temp.name,filename);
+    send(cfd,&temp,sizeof(temp),0);
+    sendfile(cfd,fd,NULL,stat_buf.st_size);
+}
+void rfile(int cfd)
+{   file asdsa;
+    struct file_node *q;
+    int simple=0;
+    char a;
+    while(1)
+    {
+    printf("%-20s%-20s%-20s%-20s%-20s\n","id","sid","文件名","大小","是否读取过");
+    List_ForEach(flist,q)
+    {
+          printf("%-20d%-20d%-20s%-20d",q->data.id,q->data.sid,q->data.name,q->data.size);
+          if (q->data.status)
+          printf("%-20s\n","已下载");
+          else printf("%-20s\n","未下载");
+    }
+    printf("输入'1'来选择一个文件下载\n");
+    printf("输入'2'来在服务器上删除一个文件\n");
+    printf("输入'3'来刷新数据\n");
+    printf("输入'4'来退出本界面\n");
+     rfile1:
+        fflush(stdin);
+        scanf("%c",&a);
+        while(getchar()!='\n');
+        switch(a)
+        {
+            case '3':
+            List_Free(flist,file_node_t);
+            struct work temp1={'5',0,0,"","",0};
+            temp1.sid=myid;
+            send(cfd,&temp1,sizeof(struct work),0);
+            printf("I'm waiting for data now\n");
+            sleep(2);
+            break;
+            case '1':
+            loadfile(cfd);
+            break;
+            case '2':
+            delfile(cfd);
+            break;
+            case '4':
+            simple=1;
+            break;
+            default:
+            printf("不是一个合法选项,请重新输入\n");
+           goto rfile1;
+            break;
+        }
+    }
+    
+}
+void delfile(int cfd)
+{   struct file_node *q;
+        int id;
+        system("clear");
+        struct work temp;
+        temp.tye='7';
+        List_ForEach(flist,q)
+        {
+            printf("%-20d%-20d%-20s%-20d",q->data.id,q->data.sid,q->data.name,q->data.size);
+            if (q->data.status)
+            printf("%-20s\n","已下载");
+            else printf("%-20s\n","未下载");
+        }
+        printf("请选择想要删除的文件id:\n");
+        if (scanf("%d",&id)!=1)
+        printf("输入的不是一个id!\n");
+        while(getchar()!='\n');
+        List_ForEach(flist,q)
+        {
+            if (q->data.id==id)
+                {
+                    temp.sid=q->data.sid;
+                    temp.rid=myid;
+                    strcpy(temp.name,q->data.name);
+                    temp.ret=q->data.size;
+                    send(cfd,&temp,sizeof(temp),0);
+                    break;
+                }
+                printf("输入了无效的id号\n");
+        }printf("输入回车继续\n");
+        
+        while(getchar()!='\n');
+
+}
+void loadfile(int cfd)
+{
+    struct file_node *q;
+        int id;
+        system("clear");
+        struct work temp;
+        temp.tye='6';
+        List_ForEach(flist,q)
+        {
+            printf("%-20d%-20d%-20s%-20d",q->data.id,q->data.sid,q->data.name,q->data.size);
+            if (q->data.status)
+            printf("%-20s\n","已下载");
+            else printf("%-20s\n","未下载");
+        }
+        printf("请选择想要下载文件id:\n");
+        if (scanf("%d",&id)!=1)
+        printf("输入的不是一个id!\n");
+        while(getchar()!='\n');
+        List_ForEach(flist,q)
+        {
+            if (q->data.id==id)
+                {
+                    temp.sid=q->data.sid;
+                    temp.rid=myid;
+                    strcpy(temp.name,q->data.name);
+                    temp.ret=q->data.size;
+                    send(cfd,&temp,sizeof(temp),0);
+                    break;
+                }
+                printf("输入了无效的id号\n");
+        }printf("输入回车继续\n");
+        
+        while(getchar()!='\n');
 }
 void managefriend(int cfd)
 {

@@ -16,6 +16,7 @@ pthread_mutex_t mutex5 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex6 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex7 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex8 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex9 = PTHREAD_MUTEX_INITIALIZER;
 yan_list_t list1=NULL;
 people_list_t list=NULL;
 people_list_t glist=NULL;
@@ -23,11 +24,13 @@ mes_list_t mes1=NULL;
 mes_list_t mes2=NULL;
 mes_list_t gmes1=NULL;
 mes_list_t gmes2=NULL;
+file_list_t flist=NULL;
 group_list_t group1=NULL;
 yan_list_t gyan=NULL;
 int main()
 {
     List_Init(list1,struct yan_node);
+    List_Init(flist,struct file_node);
     List_Init(gyan,struct yan_node);
     List_Init(list,struct people_node);
     List_Init(glist,struct people_node);
@@ -100,6 +103,8 @@ int main()
      send(cfd,&temp,sizeof(struct work),0);
      temp.tye='n';
      send(cfd,&temp,sizeof(struct work),0);
+     temp.tye='5';
+     send(cfd,&temp,sizeof(struct work),0);
     while(1)
     {
      //   system("clear");
@@ -114,6 +119,7 @@ int main()
         printf("输入'h'来进行群组管理\n");
         printf("输入'i'来进入一个群聊\n");
         printf("输入'j'来查看群组历史记录\n");
+        printf("输入'k'来传输文件\n");
         printf("输入'z'来退出\n");
         
         fflush(stdin);
@@ -150,6 +156,9 @@ int main()
         break;
         case 'j':
         grouphistory(cfd);
+        break;
+        case 'k':
+        transfile(cfd);
         break;
         case 'z':
         simple=1;

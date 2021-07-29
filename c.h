@@ -7,7 +7,10 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <termio.h>
-#include <stdio.h>                                                                                                                  
+#include<sys/stat.h>
+#include <stdio.h>       
+#include <sys/sendfile.h>
+#include<fcntl.h>                                                                                                           
 #include <unistd.h>
 #include <sys/types.h> 
 #include <sys/socket.h>
@@ -21,6 +24,18 @@ typedef struct {
     char name[30];
     int power;
 }group;
+typedef struct {
+    int id;
+    int sid;
+    char name[30];
+    int size;
+    int status;
+}file;
+typedef struct file_node{
+    file data;
+    struct file_node*prev;
+    struct file_node*next;
+}file_node_t,*file_list_t;
 typedef struct group_node{
 group data;
 struct group_node*prev;
@@ -96,10 +111,15 @@ void joingroup(int cfd);
 void getgroup(int cfd);
 void managegroup(int cfd);
 void owner(group_node_t* temp,int cfd);
+void delfile(int cfd);
+void loadfile(int cfd);
 void admin(group_node_t* temp,int cfd);
 void dog(group_node_t* temp,int cfd);
 void setadmin(int gid,int cfd);
 void exitgroup(int cfd,int gid);
 void deletemate(int gid,int cfd);
 void getgrequst(group_node_t* temp,int cfd);
+void sfile(int cfd);
+void rfile(int cfd);
+void transfile(int cfd);
 #endif

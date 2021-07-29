@@ -7,9 +7,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include"List.h"
+#include<sys/sendfile.h>
+#include<sys/stat.h>
+#include <sys/sendfile.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sys/socket.h>
+#include <sys/signal.h>
 #include <netdb.h>
 #include <fcntl.h>
 #include <sys/epoll.h>
@@ -80,9 +84,16 @@ void delmate(struct work s1,int cfd);
 void setadmin(struct work s1,int cfd);
 void joingroups(struct work temp);
 void getmygroup(int id);
+char* genRandomString(int length);
+void savefile(struct work s1,char *filename);
 int use_mysql_23(struct work s1,MYSQL mysql1);
 void killgroup(int gid);
+void delete_file(struct work s1);
+void send_file(struct work s1);
+void sendfilelist(struct work s1);
 int use_mysql_24(int gid,MYSQL mysql1);
 void getmygrequst(int gid,int sid);
 void gsend_mes(struct work s1);
+ssize_t						/* Read "n" bytes from a descriptor. */
+readn(int fd, void *vptr, size_t n);
 #endif
