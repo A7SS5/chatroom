@@ -100,6 +100,7 @@ void chatwithf(int cfd);
 void chatwithg(int cfd);
 void getrequst(int cfd);
 void grouphistory(int cfd);
+char *find_file_name(char *name);
 int isonline(int fd);
 int logon(struct work temp,int cfd);
 int login(struct work temp,int cfd);

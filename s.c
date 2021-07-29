@@ -72,7 +72,7 @@ void *solve(void* temp)
      char *filename;
     ev.events = EPOLLIN | EPOLLONESHOT;
     printf("efd:%d cfd:%d\n",s->epfd,s->conn_fd);
-    int ret = recv(s->conn_fd,&s1,sizeof(s1),0);
+    int ret = recv(s->conn_fd,&s1,sizeof(struct work),MSG_WAITALL);
     if (ret==0)
     {
         people_node_t* p;
@@ -201,9 +201,11 @@ void *solve(void* temp)
         case '7':
         delete_file(s1);
         break;
+        default:
+        printf("not really\n");
     }
-    epoll_ctl(s->epfd, EPOLL_CTL_MOD,s->conn_fd, &ev);
-     printf("结束\n");
+  //  epoll_ctl(s->epfd, EPOLL_CTL_MOD,s->conn_fd, &ev);
+     printf("%s结束\n",s1.mes);
     pthread_exit(0);
     return 0;
 }
@@ -264,7 +266,7 @@ int main()
                 
 
                 ev.data.fd= conn_fd;
-                ev.events =EPOLLIN | EPOLLONESHOT | EPOLLRDHUP;
+                ev.events =EPOLLIN ;//| EPOLLONESHOT | EPOLLRDHUP;
                 epoll_ctl(epfd,EPOLL_CTL_ADD,conn_fd,&ev);
 
             }

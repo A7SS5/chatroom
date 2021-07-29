@@ -60,14 +60,14 @@ int main()
     struct work test={'a',0,0,"","",0};
     char op;
     int ret;
-    printf("欢迎使用大鹏聊天室\n");
     while(1)
     {
         system("clear");
         ret=0;
-        printf("输入'1'来登陆一个已注册帐号\n");
-        printf("输入'2'来注册一个帐号\n");
-        printf("输入'3'退出本聊天室\n");
+        printf("============================ 欢迎使用聊天室 ============================\n");
+        printf("                        输入'1'来登陆一个已注册帐号\n");
+        printf("                        输入'2'来注册一个帐号\n");
+        printf("                        输入'3'退出本聊天室\n");
         fflush(stdin);
         scanf("%c",&op);
         while(getchar()!='\n');
@@ -107,20 +107,20 @@ int main()
      send(cfd,&temp,sizeof(struct work),0);
     while(1)
     {
-     //   system("clear");
-        printf("欢迎使用大鹏聊天室\n");
-        printf("输入'a'来查看好友列表(状态)\n");
-        printf("输入'b'来开启一个私聊(输入id号)\n");
-        printf("输入'c'来查看消息记录\n");
-        printf("输入'd'来管理好友\n");
-        printf("输入'e'来创建一个群聊\n");
-        printf("输入'f'来加入一个群聊\n");
-        printf("输入'g'来查看已加入的群组\n");
-        printf("输入'h'来进行群组管理\n");
-        printf("输入'i'来进入一个群聊\n");
-        printf("输入'j'来查看群组历史记录\n");
-        printf("输入'k'来传输文件\n");
-        printf("输入'z'来退出\n");
+        system("clear");
+        printf("============================ 欢迎使用聊天室 ============================\n");
+        printf("                        输入'a'来查看好友列表(状态)\n");
+        printf("                        输入'b'来开启一个私聊(输入id号)\n");
+        printf("                        输入'c'来查看消息记录\n");
+        printf("                        输入'd'来管理好友\n");
+        printf("                        输入'e'来创建一个群聊\n");
+        printf("                        输入'f'来加入一个群聊\n");
+        printf("                        输入'g'来查看已加入的群组\n");
+        printf("                        输入'h'来进行群组管理\n");
+        printf("                        输入'i'来进入一个群聊\n");
+        printf("                        输入'j'来查看群组历史记录\n");
+        printf("                        输入'k'来传输文件\n");
+        printf("                        输入'z'来退出\n");
         
         fflush(stdin);
         scanf("%c",&op);
@@ -165,6 +165,7 @@ int main()
         break;
         default:
             printf("不是一个合法的选择,请重新输入\n");
+            printf("输入回车键继续\n");
             break;
         }
         if (simple==1)

@@ -176,7 +176,7 @@ void *ralt(void* temp)
         {
             if (s1.sid==siliao)
             {
-                printf("sid:%d: %s",s1.sid,s1.mes);
+                printf("                                        %-s",s1.mes);
             }
             s1.tye='l';
             send(cfd,&s1,sizeof(s1),0);
@@ -518,10 +518,11 @@ void fetchallfriend(int cfd)
         system("clear");
         pthread_mutex_lock(&mutex);
         people_node_t *p;
-        printf("%-20s%-20s%-20s\n","id","用户名","在线状态");
+        printf("============================ 好友列表 ============================\n");
+        printf("                 %-20s%-20s%-20s\n","id","用户名","在线状态");
         List_ForEach(list,p)
         {
-            printf("%-20d%-20s",p->data.id,p->data.name);
+            printf("                 %-20d%-20s",p->data.id,p->data.name);
             if (p->data.status==1)
             printf("%-20s","在线");
             else printf("%-20s","不在线");
@@ -840,6 +841,7 @@ void creategroup(int cfd)
 }
 int SysLogin(int efd)  // SL界面
 {
+    system("clear");
     struct work test={'a',0,0,"","",0};
     int i = 0;
     int j = 0;
@@ -1035,6 +1037,7 @@ void readsmes(int cfd)
    char n;
    readsmes1:
    system("clear");
+        printf("============================ 聊天记录 ============================\n");
     printf("请选择你要读取的用户(id)\n");
     fflush(stdin);
     while(scanf("%d",&id)!=1)
@@ -1048,8 +1051,8 @@ void readsmes(int cfd)
     {
         if (q->data.sid==id)
         {
-            printf("id:%d 用户名:%s\n",id,a);
-            printf("%s",q->data.mes);
+            printf("                                                id:%d 用户名:%s\n",id,a);
+            printf("                                                %s",q->data.mes);
         }
         else if (q->data.rid==id)
         {
@@ -1109,7 +1112,9 @@ void nreadsmes(int cfd)
     struct work test;
      test.tye='l';
       test.rid=myid;
-    printf("%-20s%-20s%-20s\n","id","用户名","消息数");
+       system("clear");
+        printf("============================ 聊天记录 ============================\n");
+    printf("                        %-20s%-20s%-20s\n","id","用户名","消息数");
     List_ForEach(list,p)
     {
         i=0;
@@ -1118,7 +1123,7 @@ void nreadsmes(int cfd)
             if (q->data.sid==p->data.id)
             i++;
         }
-        printf("%-20d%-20s%-20d\n",p->data.id,p->data.name,i);
+        printf("                        %-20d%-20s%-20d\n",p->data.id,p->data.name,i);
     }
     printf("请选择你要读取的用户(id)\n");
     mesid:
@@ -1141,6 +1146,7 @@ void nreadsmes(int cfd)
                 printf("id:%d 用户名:%s\n%s",id,getname(id),q->data.mes);
             }
         }
+        List_Free(mes1,mes_node_t);
         printf("输入'1'来继续查看\n");
         printf("输入'2'来退出查看\n");
           mesid1:
@@ -1210,9 +1216,11 @@ void fetchallmes(int cfd)
      char a;
     while(1)
     {
-        printf("输入'1'来查看未读消息\n");
-        printf("输入'2'来查看已读消息\n");
-        printf("输入'3'来退出消息记录\n");
+         system("clear");
+        printf("============================ 欢迎使用聊天室 ============================\n");
+        printf("                        输入'1'来查看未读消息\n");
+        printf("                        输入'2'来查看已读消息\n");
+        printf("                        输入'3'来退出消息记录\n");
         fflush(stdin);
         scanf("%c",&a);
         while(getchar()!='\n');
@@ -1243,31 +1251,37 @@ void chatwithf(int cfd)
     if(scanf("%d",&id)!=1)
     {
         printf("输入的不是一个数字！\n");
+        printf("输入回车键继续\n");
+         while(getchar()!='\n');
         return;
     }
     while(getchar()!='\n');
     if (!ismyfriend(id))
     {
         printf("该用户不是您的好友!\n");
+         printf("输入回车键继续\n");
+          while(getchar()!='\n');
         return;
     }
     char *name=getname(id);
     struct work mes;
     siliao=id;
+    system("clear");
     mes.rid=id;mes.sid=myid;mes.tye='k';mes.ret=0; //k为发送消息包，并通过ret=1代表此消息对方未读.
-    printf("id:%d %s\n正在与你私聊,输入exit来退出\n",id,name);
+    printf("                        %s正在与你私聊,输入\"/exit来退出\"\n",name);
     if (!isonline(id))
     {
         printf("当前对方不在线\n");
     }
+     printf("your send:                                         %-s:\n",name);
     while(fgets(mes.mes,1000,stdin))
     {
-        printf("your send:\n");
-        if (strcmp(mes.mes,"exit\n")==0)
+ //       printf("your send:\n");
+        if (strcmp(mes.mes,"/exit\n")==0)
         {
             break;
         }
-        send(cfd,&mes,sizeof(mes),0);
+        send(cfd,&mes,sizeof(struct work),0);
     }
     siliao=0;
 }
@@ -1922,7 +1936,7 @@ void sfile(int cfd)
     struct stat stat_buf;
     fstat(fd,&stat_buf);
     temp.ret=stat_buf.st_size;
-    strcpy(temp.name,filename);
+    strcpy(temp.name,find_file_name(filename));
     send(cfd,&temp,sizeof(temp),0);
     sendfile(cfd,fd,NULL,stat_buf.st_size);
 }
@@ -1973,8 +1987,25 @@ void rfile(int cfd)
            goto rfile1;
             break;
         }
+        if (simple==1)
+        {
+            break;
+        }
     }
     
+}
+
+char *find_file_name(char *name)
+{
+	char *name_start = NULL;
+	int sep = '/';
+	if (NULL == name) {
+			printf("the path name is NULL\n");
+	    return NULL;
+	}
+	name_start = strrchr(name, sep);
+ 
+	return (NULL == name_start)?name:(name_start + 1);
 }
 void delfile(int cfd)
 {   struct file_node *q;
