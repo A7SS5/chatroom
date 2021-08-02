@@ -578,6 +578,11 @@ void add_friend(int cfd)
                 printf("id:%d用户已经是您的好友!\n",id);
                 return;
             }
+            if (id==myid)
+            {
+                printf("不能加自己为好友!\n");
+                return;
+            }
             struct work ss;
             ss.tye='d';
             ss.rid=id;
@@ -1050,12 +1055,17 @@ void readsmes(int cfd)
         while(getchar()!='\n');
     }
     while (getchar()!='\n');
-    a=getname(id);
+    if (!ismyfriend(id))
+    {
+        printf("id:%d用户不是您的好友,输入回车继续\n",id);
+        while(getchar()!='\n');
+        return;
+    }
     List_ForEach(mes2,q)
     {
         if (q->data.sid==id)
         {
-            printf("                                                id:%d 用户名:%s\n",id,a);
+            printf("                                                id:%d",id);
             printf("                                                %s",q->data.mes);
         }
         else if (q->data.rid==id)
@@ -1140,6 +1150,10 @@ void nreadsmes(int cfd)
         goto mesid;
     }
      while(getchar()!='\n');
+     if (!ismyfriend(id))
+     {
+         printf("id:%d的用户不是您的好友\n",id);
+     }
       List_ForEach(mes1,q)
         {
             if (q->data.sid==id)
@@ -1305,7 +1319,8 @@ void chatwithg(int cfd)
     while(getchar()!='\n');
     if (!ismygroup(gid))
     {
-        printf("您还未加入该群组!\n");
+        printf("您还未加入该群组!，输入回车键继续\n");
+        while(getchar()!='\n');
         return;
     }
     char *name=getgname(gid);
@@ -1357,7 +1372,6 @@ void fetchallgmes(int cfd,int gid)
 }
 void joingroup(int cfd)
 {
-    system("clear");
     int id;
     struct work temp;
     printf("请输入您想加入的群组id号\n");
@@ -1365,6 +1379,13 @@ void joingroup(int cfd)
     while (scanf("%d",&id)!=1)
     {   while(getchar()!='\n');
         printf("输入的不是一个数字！，请重新输入\n");
+    }
+    while(getchar()!='\n');
+    if (ismygroup(id))
+    {
+        printf("你已经是id:%d的群组成员,输入回车继续",id);
+        while(getchar()!='\n');
+        return;
     }
     temp.sid=myid;
     temp.rid=id;
@@ -1601,12 +1622,13 @@ void managegroup(int cfd)
     int id;
     mangroup:
     system("clear");
+    printf("============================ 群组管理 ============================\n");
     int i=0;
-    printf("%-20s%-20s\n","群组id","群组名称");
+    printf("                  %-20s%-20s\n","群组id","群组名称");
     pthread_mutex_lock(&mutex4);
     List_ForEach(group1,p)
     {
-        printf("%-20d%-20s\n",p->data.gid,p->data.name);
+        printf("                  %-20d%-20s\n",p->data.gid,p->data.name);
     }
     pthread_mutex_unlock(&mutex4);
     printf("请输入你要管理的群组id:\n");
@@ -1650,13 +1672,14 @@ void getgrequst(group_node_t* temp,int cfd)   //未完成
     int simple=0;
     while(1)
     {
-   //     system("clear");
+        system("clear");
+          printf("============================ 群组管理 ============================\n");
         pthread_mutex_lock(&mutex5);
         yan_node_t *p;
-        printf("%-20s%-20s%-20s%-20s\n","序号","id","用户名","种类");
+        printf("                    %-20s%-20s%-20s%-20s\n","序号","id","用户名","种类");
         List_ForEach(gyan,p)
         {
-            printf("%-20d%-20d%-20s",p->data.xu,p->data.sid,p->data.name);
+        printf("                    %-20d%-20d%-20s",p->data.xu,p->data.sid,p->data.name);
             if (p->data.type==1)
             {
                 printf("%-20s\n","申请");
@@ -1668,9 +1691,9 @@ void getgrequst(group_node_t* temp,int cfd)   //未完成
         }
         pthread_mutex_unlock(&mutex5);
        
-        printf("输入'1'来刷新验证消息表\n");
-        printf("输入'2'来选择一条信息操作\n");
-        printf("输入'3'来退出\n");
+        printf("                        输入'1'来刷新验证消息表\n");
+        printf("                        输入'2'来选择一条信息操作\n");
+        printf("                        输入'3'来退出\n");
         getgrequst1:
         fflush(stdin);
         scanf("%c",&a);
@@ -1711,14 +1734,15 @@ void owner(group_node_t* temp,int cfd) //主人
     {
         own:
         system("clear");
+          printf("============================ 群组管理 ============================\n");
         char a;
         printf("欢迎你%-20s的群主\n",temp->data.name);
-        printf("输入'1'来查看群验证信息\n");
-        printf("输入'2'来设置一个管理员\n");
-        printf("输入'3'来踢出一个群成员\n");
-        printf("输入'4'来解散本群组\n");
-        printf("输入'5'来查看群成员\n");
-        printf("输入'6'来退出本界面\n");
+        printf("                        输入'1'来查看群验证信息\n");
+        printf("                        输入'2'来设置一个管理员\n");
+        printf("                        输入'3'来踢出一个群成员\n");
+        printf("                        输入'4'来解散本群组\n");
+        printf("                        输入'5'来查看群成员\n");
+        printf("                        输入'6'来退出本界面\n");
         fflush(stdin);
         if (scanf("%c",&a)!=1)
         {
@@ -1764,13 +1788,14 @@ void admin(group_node_t* temp,int cfd)  //管理员
     {
        admin1:
         system("clear");
+        printf("============================ 群组管理 ============================\n");
         char a;
         printf("欢迎你%-20s的管理员\n",temp->data.name);
-        printf("输入'1'来查看群验证信息\n");
-        printf("输入'2'来踢出一个群成员\n");
-        printf("输入'3'来查看群成员\n");
-        printf("输入'4'来退出本群聊\n");
-        printf("输入'5'来退出本界面\n");
+        printf("                        输入'1'来查看群验证信息\n");
+        printf("                        输入'2'来踢出一个群成员\n");
+        printf("                        输入'3'来查看群成员\n");
+        printf("                        输入'4'来退出本群聊\n");
+        printf("                        输入'5'来退出本界面\n");
         fflush(stdin);
         if (scanf("%c",&a)!=1)
         {
@@ -1813,10 +1838,11 @@ void dog(group_node_t* temp,int cfd) //普通群员
        dog1:
         system("clear");
         char a;
-        printf("欢迎你%-20s的管理员\n",temp->data.name);
-        printf("输入'1'来查看群成员\n");
-        printf("输入'2'来退出本群聊\n");
-        printf("输入'3'来退出本界面\n");
+          printf("============================ 群组管理 ============================\n");
+        printf("欢迎你%-20s的群成员\n",temp->data.name);
+        printf("                        输入'1'来查看群成员\n");
+        printf("                        输入'2'来退出本群聊\n");
+        printf("                        输入'3'来退出本界面\n");
         fflush(stdin);
         if (scanf("%c",&a)!=1)
         {
@@ -1852,11 +1878,11 @@ void grouphistory(int cfd)
     grouph:
     system("clear");
     int i=0;
-    printf("%-20s%-20s\n","群组id","群组名称");
+    printf("                        %-20s%-20s\n","群组id","群组名称");
     pthread_mutex_lock(&mutex4);
     List_ForEach(group1,p)
     {
-        printf("%-20d%-20s\n",p->data.gid,p->data.name);
+        printf("                        %-20d%-20s\n",p->data.gid,p->data.name);
     }
     pthread_mutex_unlock(&mutex4);
     printf("请输入你要查看记录的群组id:\n");
@@ -1878,8 +1904,9 @@ void grouphistory(int cfd)
     }
     if (i==0)
     {
-        printf("输入的不是有效的id!请重新输入\n");
-        goto grouph;
+        printf("输入的不是有效的id!请输入回车后继续\n");
+        while(getchar()!='\n');
+        return;
     }
     struct work temp;
     temp.tye='2';temp.sid=myid;temp.rid=id;send(cfd,&temp,sizeof(temp),0);
@@ -1892,9 +1919,11 @@ void transfile(int cfd)
     int simple=0;
     while(1)
     {
-        printf("输入'1'来查看待接收的文件\n");
-        printf("输入'2'来发送一个文件\n");
-        printf("输入'3'来退出出此界面\n");
+        system("clear");
+        printf("============================ 传输文件 ============================\n");
+        printf("                        输入'1'来查看待接收的文件\n");
+        printf("                        输入'2'来发送一个文件\n");
+        printf("                        输入'3'来退出出此界面\n");
         fflush(stdin);
         while(scanf("%c",&choice)!=1)
         {
@@ -1927,7 +1956,13 @@ void sfile(int cfd)
     int fd;
     char filename[30];
     printf("输入你想传输的对象id号\n");
-    scanf("%d",&id);getchar();
+    if (scanf("%d",&id)!=1||!ismyfriend(id))
+    {
+        printf("无效的ID\n");
+        while(getchar()!='\n');
+        return;
+    }getchar();
+    
     printf("请输入正确的文件地址\n");
     scanf("%s",filename);getchar();
     struct work temp;
@@ -1954,18 +1989,20 @@ void rfile(int cfd)
     char a;
     while(1)
     {
-    printf("%-20s%-20s%-20s%-20s%-20s\n","id","sid","文件名","大小","是否读取过");
+        system("clear");
+    printf("============================ 传输文件 ============================\n");
+    printf("                    %-20s%-20s%-20s%-20s%-20s\n","id","sid","文件名","大小","是否读取过");
     List_ForEach(flist,q)
     {
-          printf("%-20d%-20d%-20s%-20d",q->data.id,q->data.sid,q->data.name,q->data.size);
+          printf("                    %-20d%-20d%-20s%-20d",q->data.id,q->data.sid,q->data.name,q->data.size);
           if (q->data.status)
           printf("%-20s\n","已下载");
           else printf("%-20s\n","未下载");
     }
-    printf("输入'1'来选择一个文件下载\n");
-    printf("输入'2'来在服务器上删除一个文件\n");
-    printf("输入'3'来刷新数据\n");
-    printf("输入'4'来退出本界面\n");
+    printf("                        输入'1'来选择一个文件下载\n");
+    printf("                        输入'2'来在服务器上删除一个文件\n");
+    printf("                        输入'3'来刷新数据\n");
+    printf("                        输入'4'来退出本界面\n");
      rfile1:
         fflush(stdin);
         scanf("%c",&a);
