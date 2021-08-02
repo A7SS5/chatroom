@@ -122,8 +122,9 @@ void *ralt(void* temp)
         case 'c':
             if (s1.rid==0)
             {
-                i=0;
                 allcansee=1;
+                printf("allcansee=1\n");
+                i=0;
                 pthread_mutex_unlock(&mutex);
                 break;
             }
@@ -564,7 +565,9 @@ void fetchallfriend(int cfd)
             {
                 sleep(1);
                 printf("等待服务器响应\n");
+                printf("allcansee=%d",allcansee);
             }
+             allcansee=-1;
             break;
             case '2':
             simple=1;
