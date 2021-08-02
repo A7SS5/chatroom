@@ -560,7 +560,7 @@ void fetchallfriend(int cfd)
             temp.sid=myid;
             send(cfd,&temp,sizeof(struct work),0);
             allcansee=0;
-            while(!allcansee)
+            while(allcansee==0)
             {
                 sleep(1);
                 printf("等待服务器响应\n");
