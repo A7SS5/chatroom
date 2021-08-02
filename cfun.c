@@ -123,6 +123,7 @@ void *ralt(void* temp)
             if (s1.rid==0)
             {
                 i=0;
+                allcansee=1;
                 pthread_mutex_unlock(&mutex);
                 break;
             }
@@ -150,12 +151,14 @@ void *ralt(void* temp)
                 strcpy(old->data.name,s1.name);
                 old->data.type=1;
                 old->data.xu=0;
+                printf("您有一条新的验证消息\n");
  //               printf("%-20d%-20s%-20d\n",s1.sid,s1.name,1);
                 List_AddTail(list1,old);      
             break;
         case 'g':
             if (s1.sid==0)
             {
+                printf("你有%d条验证消息等待处理\n",j);
                 j=0;
                 pthread_mutex_unlock(&mutex1);
                 break;
@@ -174,17 +177,22 @@ void *ralt(void* temp)
         case 'k':
         if (siliao!=0)
         {
+        
             if (s1.sid==siliao)
             {
                 printf("\n                                        %s:%d\n","id:",s1.sid);
                 printf("                                        %-45s\n",s1.mes);
-            }
-            s1.tye='l';
+                 s1.tye='l';
             send(cfd,&s1,sizeof(s1),0);
+            }
+            else printf("id:%d给您发了一条新的消息\n",s1.sid);
+            
         }
         if (s1.sid==0) //发送者id不可能为0,表示结束并放开锁
             {
                 k=0;
+                sleep(1);
+                printf("您有%d条未读消息\n",k);
                 pthread_mutex_unlock(&mutex2);
                 break;
             }
@@ -319,6 +327,7 @@ void *ralt(void* temp)
             {
                 q=0;
                 pthread_mutex_unlock(&mutex9);
+                allcansee=1;
                 break;
             }
                 if (q==0)
@@ -347,7 +356,11 @@ void *ralt(void* temp)
 
         close(out);
         break;
+        case 'x':
+        allcansee=1;
+        break;
         }
+    
     }
 }
 void exitgroup(int cfd,int gid)
@@ -546,8 +559,12 @@ void fetchallfriend(int cfd)
             struct work temp={'c',0,0,"","",0};
             temp.sid=myid;
             send(cfd,&temp,sizeof(struct work),0);
-            printf("I'm waiting for data now\n");
-            sleep(2);
+            allcansee=0;
+            while(!allcansee)
+            {
+                sleep(1);
+                printf("等待服务器响应\n");
+            }
             break;
             case '2':
             simple=1;
@@ -589,8 +606,9 @@ void add_friend(int cfd)
             ss.sid=myid;
             send(cfd,&ss,sizeof(ss),0);
             allcansee=-1;
-            if (allcansee==-1)
+            while (allcansee==-1)
             {
+                printf("等待客户端响应\n");
                 sleep(1);
             }
             if (allcansee==1)
@@ -1981,6 +1999,12 @@ void sfile(int cfd)
     strcpy(temp.name,find_file_name(filename));
     send(cfd,&temp,sizeof(temp),0);
     sendfile(cfd,fd,NULL,stat_buf.st_size);
+    allcansee=0;
+    while(!allcansee)
+    {
+        printf("等待服务器响应\n");
+        sleep(1);
+    }
 }
 void rfile(int cfd)
 {   file asdsa;
@@ -2014,8 +2038,12 @@ void rfile(int cfd)
             struct work temp1={'5',0,0,"","",0};
             temp1.sid=myid;
             send(cfd,&temp1,sizeof(struct work),0);
+            allcansee=0;
+            while(!allcansee)
+            {
+                sleep(1);
             printf("I'm waiting for data now\n");
-            sleep(2);
+            }
             break;
             case '1':
             loadfile(cfd);
@@ -2114,8 +2142,10 @@ void loadfile(int cfd)
                     send(cfd,&temp,sizeof(temp),0);
                     break;
                 }
-                printf("输入了无效的id号\n");
-        }printf("输入回车继续\n");
+               
+        }
+         printf("输入了无效的id号\n");
+        printf("输入回车继续\n");
         
         while(getchar()!='\n');
 }

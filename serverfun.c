@@ -1041,7 +1041,7 @@ int use_mysql_15(struct work temp,MYSQL mysql1)
 		if(result){
 				row=mysql_fetch_row(result);
 				if (!row)
-				{	mysql_free_result(result);
+				{	
 					ret=mysql_query(&mysql,string1);
 					
 						if (!ret)
@@ -1073,11 +1073,12 @@ int use_mysql_15(struct work temp,MYSQL mysql1)
 						}
 					
 				}
-				else{	mysql_free_result(result);
+				else{	
 					test.ret=0;
 					send(send_fd,&test,sizeof(test),0);
 				}
 				}
+				mysql_free_result(result);
 				printf("\n");		
 	}
 	else{

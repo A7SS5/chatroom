@@ -9,10 +9,6 @@ void mylogin(struct work s1,struct s1* s)
      int c=judege(s1.name,s1.password);
     if (c==1)
 	{
-    
-
-
-
     people_node_t *new=NULL;
     new=(people_node_t*)malloc(sizeof(people_node_t));
     peple a;
@@ -70,7 +66,7 @@ void *solve(void* temp)
     struct epoll_event ev;
     ev.data.fd = s->conn_fd;
      char *filename;
-    ev.events = EPOLLIN | EPOLLONESHOT;
+    ev.events = EPOLLIN;
     printf("efd:%d cfd:%d\n",s->epfd,s->conn_fd);
     int ret = recv(s->conn_fd,&s1,sizeof(struct work),MSG_WAITALL);
     if (ret==0)
@@ -179,7 +175,7 @@ void *solve(void* temp)
         getallngmes(s1.rid,s1.sid,s->conn_fd);
         break;
         case '4':
-      //  epoll_ctl(s->epfd,EPOLL_CTL_DEL,s->conn_fd,NULL);
+        epoll_ctl(s->epfd,EPOLL_CTL_MOD,s->conn_fd,NULL);
         filename=genRandomString(4);
         out=creat(filename,0664);
         int len=s1.ret;
@@ -191,7 +187,11 @@ void *solve(void* temp)
         }
         savefile(s1,filename);
         close(out);
+        struct work retr;
+        retr.tye='x';
+        send(s->conn_fd,&retr,sizeof(struct work),0);
         break;
+         epoll_ctl(s->epfd,EPOLL_CTL_MOD,s->conn_fd,&ev);
         case '5':
         sendfilelist(s1);
         break;
@@ -202,7 +202,7 @@ void *solve(void* temp)
         delete_file(s1);
         break;
         default:
-        printf("not really\n");
+        printf("not really:%c\n",s1.tye);
     }
   //  epoll_ctl(s->epfd, EPOLL_CTL_MOD,s->conn_fd, &ev);
      printf("%s结束\n",s1.mes);
@@ -284,4 +284,5 @@ int main()
         }
     }
     close(sock_fd);
+    List_Destroy(list,people_node_t);
 }

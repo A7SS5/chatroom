@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <termio.h>
+#include<signal.h>
 #include<sys/stat.h>
 #include <stdio.h>       
 #include <sys/sendfile.h>

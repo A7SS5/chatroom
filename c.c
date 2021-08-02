@@ -4,7 +4,7 @@
  int siliao=0;
  int qunliao=0;
  int allcansee=-1;
-#define SERVER_ADDR     "127.0.0.1"
+#define SERVER_ADDR     "192.168.30.121"
 #define SERVER_PORT     9000
  
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -29,6 +29,7 @@ group_list_t group1=NULL;
 yan_list_t gyan=NULL;
 int main()
 {
+     signal(SIGPIPE,SIG_IGN);
     List_Init(list1,struct yan_node);
     List_Init(flist,struct file_node);
     List_Init(gyan,struct yan_node);
@@ -105,10 +106,13 @@ int main()
      send(cfd,&temp,sizeof(struct work),0);
      temp.tye='5';
      send(cfd,&temp,sizeof(struct work),0);
+     temp.tye='q';
+    send(cfd,&temp,sizeof(struct work),0);
     while(1)
     {
         system("clear");
         printf("============================ 欢迎使用聊天室 ============================\n");
+        printf("ID:%d\n",myid);
         printf("                        输入'a'来查看好友列表(状态)\n");
         printf("                        输入'b'来开启一个私聊(输入id号)\n");
         printf("                        输入'c'来查看消息记录\n");
