@@ -108,6 +108,7 @@ int main()
      send(cfd,&temp,sizeof(struct work),0);
      temp.tye='q';
     send(cfd,&temp,sizeof(struct work),0);
+    sleep(2);
     while(1)
     {
         system("clear");
