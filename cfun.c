@@ -560,8 +560,8 @@ void fetchallfriend(int cfd)
             struct work temp={'c',0,0,"","",0};
             temp.sid=myid;
             send(cfd,&temp,sizeof(struct work),0);
-            allcansee=0;
-            while(allcansee==0)
+            allcansee=-1;
+            while(allcansee==-1)
             {
                 sleep(1);
                 printf("等待服务器响应\n");
