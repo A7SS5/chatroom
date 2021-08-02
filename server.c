@@ -95,6 +95,9 @@ void *solve(void* temp)
         break;
         case 'c':
         getmyfriend(s1.sid);
+        struct work temp12;
+        temp12.tye='x';
+        send(s->conn_fd,&temp12,sizeof(struct work),0);
         break;
         case 'e':
         break;
