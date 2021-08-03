@@ -3,6 +3,8 @@
 #define SERV_PORT 9000
 #define MAX_CONTECT_SIZE 20
 people_list_t list=NULL;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 void mylogin(struct work s1,struct s1* s)
 {
     struct work rets;
@@ -62,13 +64,12 @@ void *solve(void* temp)
     char buf[2000];
     int num;
         struct s1 *s=(struct s1*)temp;
-    pthread_detach(pthread_self());
     struct epoll_event ev;
     ev.data.fd = s->conn_fd;
      char *filename;
     ev.events = EPOLLIN;
     printf("efd:%d cfd:%d\n",s->epfd,s->conn_fd);
-    int ret = recv(s->conn_fd,&s1,sizeof(struct work),MSG_WAITALL);
+    int ret = recv(s->conn_fd,&s1,sizeof(struct work),0);
     if (ret==0)
     {
         people_node_t* p;
@@ -95,14 +96,12 @@ void *solve(void* temp)
         break;
         case 'c':
         getmyfriend(s1.sid);
-        struct work temp12;
-        temp12.tye='x';
-        send(s->conn_fd,&temp12,sizeof(struct work),0);
         break;
         case 'e':
         break;
-        case 'd':
+        case 'd': pthread_mutex_lock(&mutex);
         printf("id:%d 是 %d\n",s1.rid,ishe(s1.rid,s));
+                pthread_mutex_unlock(&mutex);
         break;
         case 'f':
         add_friends(s1);
@@ -178,23 +177,24 @@ void *solve(void* temp)
         getallngmes(s1.rid,s1.sid,s->conn_fd);
         break;
         case '4':
-        epoll_ctl(s->epfd,EPOLL_CTL_MOD,s->conn_fd,NULL);
+        epoll_ctl(s->epfd,EPOLL_CTL_DEL,s->conn_fd,NULL);
+        struct work sim;
+        sim.tye='d';
+        send(s->conn_fd,&sim,sizeof(struct work),0);
         filename=genRandomString(4);
         out=creat(filename,0664);
         int len=s1.ret;
         while(len>0 ){
+            memset(buf,'\0',sizeof(buf));
             num=recv(s->conn_fd,buf,1024,0); 
             len=len-num;
             write(out,buf,num);
-        	memset(buf,'\0',sizeof(buf));
         }
+        
+          epoll_ctl(s->epfd,EPOLL_CTL_ADD,s->conn_fd,&ev);
         savefile(s1,filename);
         close(out);
-        struct work retr;
-        retr.tye='x';
-        send(s->conn_fd,&retr,sizeof(struct work),0);
         break;
-         epoll_ctl(s->epfd,EPOLL_CTL_MOD,s->conn_fd,&ev);
         case '5':
         sendfilelist(s1);
         break;
@@ -207,8 +207,8 @@ void *solve(void* temp)
         default:
         printf("not really:%c\n",s1.tye);
     }
-  //  epoll_ctl(s->epfd, EPOLL_CTL_MOD,s->conn_fd, &ev);
      printf("%s结束\n",s1.mes);
+    pthread_detach(pthread_self());
     pthread_exit(0);
     return 0;
 }

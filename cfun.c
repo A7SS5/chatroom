@@ -2095,6 +2095,16 @@ void sfile(int cfd)
     temp.ret=stat_buf.st_size;
     strcpy(temp.name,find_file_name(filename));
     send(cfd,&temp,sizeof(temp),0);
+    while(1)
+    {
+        if (allcansee==-1)
+        {
+            printf("等待服务器响应\n");
+            sleep(1);
+            system("clear");
+        }
+        else break;
+    }
     sendfile(cfd,fd,NULL,stat_buf.st_size);
 
 }

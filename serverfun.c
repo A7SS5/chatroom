@@ -310,13 +310,12 @@ int use_mysql_3(int id,MYSQL mysql1)
 			num_rows = mysql_num_rows(result);
 			
 				int i=0;
-				int send_fd;
-
+				int send_fd;	
+					send_fd=getcfd(id);
 					while((row = mysql_fetch_row(result))){
 					temp.rid=atoi(row[0]);
 					strcpy(temp.name,row[1]);
 					temp.ret=getstatus(temp.rid);
-					send_fd=getcfd(id);
 					send(send_fd,&temp,sizeof(temp),0);
 					i++;
 					}
@@ -510,6 +509,7 @@ int use_mysql_31(struct work s1,MYSQL mysql1)
 			struct stat stat_buf;
 			fstat(fd,&stat_buf);
 			sendfile(getcfd(s1.rid),fd,NULL,stat_buf.st_size);
+			close(fd);
 		}
 		mysql_free_result(result);
 	}
@@ -663,13 +663,12 @@ int use_mysql_6(int id,MYSQL mysql1)
 			num_rows = mysql_num_rows(result);
 			num_feids=mysql_num_fields(result);
 				int send_fd;
-
+					send_fd=getcfd(id);
 					while((row = mysql_fetch_row(result))){
 					temp.rid=atoi(row[0]);
 					temp.ret=atoi(row[2]);
 					strcpy(temp.name,row[3]);
 					temp.sid=1;
-					send_fd=getcfd(id);
 					send(send_fd,&temp,sizeof(temp),0);
 					}
 					temp.sid=0;
@@ -808,7 +807,7 @@ int use_mysql_16(struct work temp,MYSQL mysql1)
 	MYSQL_RES           *result = NULL;
 	MYSQL_ROW           row;
 	int send_fd=getcfd(temp.sid);
-	struct work test={'o',0,0,"","",0,""};
+	struct work test={'x',0,0,"","",0,""};
 	ret = mysql_query(&mysql, string);
 	if(!ret){
 		result = mysql_store_result(&mysql);
@@ -1059,7 +1058,9 @@ int use_mysql_15(struct work temp,MYSQL mysql1)
 									ret=mysql_query(&mysql,string2);
 									if (!ret)
 									{
+										strcpy(test.name,temp.name);
 										test.ret=1;
+										test.rid=temp.rid;
 										send(send_fd,&test,sizeof(test),0);
 									}
 									else printf("error %s\n",string2);
@@ -1111,7 +1112,8 @@ int use_mysql_25(struct work s1,MYSQL mysql1)
 							temp.ret=0;
 							id=atoi(row[0]);
 							if (id==s1.sid)
-							{temp.ret=1;
+							{
+								temp.ret=1;
 							}
 							else{
 							if (getstatus(id))
@@ -1131,8 +1133,8 @@ int use_mysql_25(struct work s1,MYSQL mysql1)
 									return -1;
 								}
 							}
-					temp.sid=0;
-					send(send_fd,&temp,sizeof(temp),0);
+//					temp.sid=0;
+//					send(send_fd,&temp,sizeof(temp),0);
 				}
 				printf("\n");		
 		mysql_free_result(result);
