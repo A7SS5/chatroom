@@ -30,6 +30,18 @@ void getgroupmates(int gid,int cfd)
      int simple=0;
     while(1)
     {
+        allcansee=-1;
+        List_Free(glist,people_node_t);
+        struct work temp={'v',0,0,"","",0};
+        temp.sid=gid;
+        send(cfd,&temp,sizeof(struct work),0);
+        while(allcansee==-1)
+        {
+            printf("等待服务器响应\n");
+            sleep(1);
+            system("clear");
+        }
+
         system("clear");
         pthread_mutex_lock(&mutex6);
         people_node_t *p;
@@ -46,23 +58,16 @@ void getgroupmates(int gid,int cfd)
         }
         pthread_mutex_unlock(&mutex6);
        
-        printf("输入'1'来刷新状态\n");
-        printf("输入'2'来退出查看\n");
+    //    printf("输入'1'来刷新状态\n");
+        printf("输入'1'来退出查看\n");
         getgroupmates1:
         fflush(stdin);
         scanf("%c",&a);
         while(getchar()!='\n');
         switch(a)
         {
+        
             case '1':
-            List_Free(glist,people_node_t);
-            struct work temp={'v',0,0,"","",0};
-            temp.sid=gid;
-            send(cfd,&temp,sizeof(struct work),0);
-            printf("I'm waiting for data now\n");
-            sleep(2);
-            break;
-            case '2':
             simple=1;
             break;
             default:
@@ -233,12 +238,16 @@ void *ralt(void* temp)
             {
                 allcansee=0;
             }
-            else allcansee=1;
+            else {
+                allcansee=1;
+                printf("您创建的群组名为%s,ID号为%d",s1.name,s1.rid);
+                }
             break;
         case 'p':
         if (s1.rid==0) //发送者id不可能为0,表示结束并放开锁
         {
             m=0;
+            allcansee=1;
             pthread_mutex_unlock(&mutex4);
             break;
         }
@@ -255,6 +264,7 @@ void *ralt(void* temp)
             if (s1.sid==0)
                 {
                     n=0;
+                     allcansee=1;
                     pthread_mutex_unlock(&mutex5);
                     break;
                 }
@@ -273,6 +283,7 @@ void *ralt(void* temp)
          if (s1.rid==0)
             {
                 o=0;
+                allcansee=1;
                 pthread_mutex_unlock(&mutex6);
                 break;
             }
@@ -292,15 +303,19 @@ void *ralt(void* temp)
                 {
                     if (s1.rid==qunliao)
                     {
-                        printf("sid:%d:name:%s\n %s",s1.sid,s1.name,s1.mes);
+                        printf("\n                                    sid:%d\n",s1.sid);
+                        printf("                                    %s\n",s1.mes);
+                        s1.tye='1';
+                        s1.ret=myid;
+                        send(cfd,&s1,sizeof(s1),0);
+                        break;
                     }
-                    s1.tye='1';
-                    s1.ret=myid;
-                    send(cfd,&s1,sizeof(s1),0);
+                    else printf("群id:%d有一条新消息\n",s1.rid);
                 }
         if (s1.sid==0) //发送者id不可能为0,表示结束并放开锁
             {
                 p=0;
+                allcansee=1;
                 pthread_mutex_unlock(&mutex7);
                 break;
             }
@@ -318,6 +333,7 @@ void *ralt(void* temp)
         if (s1.sid==0) //发送者id不可能为0,表示结束并放开锁
             {
                 v=0;
+                allcansee=1;
                 pthread_mutex_unlock(&mutex8);
                 break;
             }
@@ -363,7 +379,16 @@ void *ralt(void* temp)
 
         close(out);
         break;
-        
+        case 'x':
+            if (s1.ret==0)
+            {
+                allcansee=0;
+            }
+            else {
+                allcansee=1;
+                
+                }
+        break;
         }
     
     }
@@ -408,7 +433,8 @@ void yanzhengg(int cfd,int gid)
     fflush(stdin);
     if (scanf("%d",&id)!=1)
     {  
-        printf("输入不合法\n");
+        printf("输入不合法,输入回车继续\n");
+        while(getchar()!='\n');
         return;
     }
      while(getchar()!='\n');
@@ -460,7 +486,10 @@ void yanzhengg(int cfd,int gid)
             }
             break;
         }
+        
     }
+    printf("无效的序号,输入回车继续\n");
+    while(getchar()!='\n');
     
 
 }
@@ -853,9 +882,14 @@ void creategroup(int cfd)
     test.sid=myid;
      allcansee=-1;
     send(cfd,&test,sizeof(test),0);
+    int i=0;
     while(allcansee==-1)
     {
+        printf("等待服务器响应\n");
         sleep(1);
+        i++;
+        if (i==5)
+        send(cfd,&test,sizeof(test),0);
     }
     if (allcansee==0)
     {
@@ -1137,8 +1171,18 @@ void readsmes(int cfd)
 void readgmes(int cfd,int gid)
 {
    mes_node_t *q;
+   allcansee=-1;
    char *a;
    system("clear");
+    struct work temp;
+     List_Free(gmes2,mes_node_t);
+    temp.tye='2';temp.sid=myid;temp.rid=gid;send(cfd,&temp,sizeof(temp),0);
+    while(allcansee==-1)
+        {
+            printf("等待服务器响应\n");
+            sleep(1);
+            system("clear");
+        }
     a=getgname(gid);
     printf("群组id：%d 群组名:%s\n",gid,a);
     pthread_mutex_lock(&mutex8);
@@ -1237,14 +1281,25 @@ void nreadsmes(int cfd)
 }
 void nreadgmes(int cfd,int gid)
 {
+    allcansee=-1;
     group_node_t *p;
     mes_node_t *q;
     int i=0;
+    List_Free(gmes1,mes_node_t);
+     struct work temp;
+        temp.sid=myid;temp.rid=gid;
+        temp.tye='3';send(cfd,&temp,sizeof(temp),0);
+        while(allcansee==-1)
+        {
+            printf("等待服务器响应\n");
+            sleep(1);
+            system("clear");
+        }
     system("clear");
     struct work test;
      test.tye='1';
       test.ret=myid;
-    printf("%-20s%-20s%-20s\n","gid","群组名","消息数");
+/*    printf("%-20s%-20s%-20s\n","gid","群组名","消息数");
     List_ForEach(group1,p)
     {
         i=0;
@@ -1257,6 +1312,7 @@ void nreadgmes(int cfd,int gid)
         pthread_mutex_unlock(&mutex7);
         printf("%-20d%-20s%-20d\n",p->data.gid,getgname(p->data.gid),i);
     }
+   */ 
       List_ForEach(gmes1,q)
         {
             if (q->data.rid==gid)
@@ -1385,7 +1441,8 @@ void fetchallgmes(int cfd,int gid)
     int simple=0;
     char a;
     while(1)
-    {system("clear");
+    {   
+        system("clear");
         printf("输入'1'来查看未读消息\n");
         printf("输入'2'来查看已读消息\n");
         printf("输入'3'来退出消息记录\n");
@@ -1455,6 +1512,7 @@ void getgroup(int cfd)
     int simple=0;
     while(1)
     {
+        allcansee=-1;
         system("clear");
         pthread_mutex_lock(&mutex4);
         printf("%-20s%-20s\n","群组id","群组名称");
@@ -1479,8 +1537,14 @@ void getgroup(int cfd)
             test.tye='q';
             test.sid=myid;
             send(cfd,&test,sizeof(test),0);
-            printf("正在获取数据.....\n");
-            sleep(1);
+            while(1)
+            {
+                if (allcansee==-1)
+                {
+                    printf("等待服务器响应\n");
+                }
+                else break;
+            }
             break;
             case '2':
             simple=1;
@@ -1514,9 +1578,9 @@ void deletemate(int gid,int cfd)
         }
         pthread_mutex_unlock(&mutex6);
        
-        printf("输入'1'来刷新状态\n");
-        printf("输入'2'来选择一个群成员(id)\n");
-        printf("输入'3'来退出查看\n");
+  //      printf("输入'1'来刷新状态\n");
+        printf("输入'1'来选择一个群成员(id)\n");
+        printf("输入'2'来退出查看\n");
         deletemate1:
         fflush(stdin);
         scanf("%c",&a);
@@ -1524,14 +1588,6 @@ void deletemate(int gid,int cfd)
         switch(a)
         {
             case '1':
-            List_Free(glist,people_node_t);
-            struct work temp={'v',0,0,"","",0};
-            temp.sid=gid;
-            send(cfd,&temp,sizeof(struct work),0);
-            printf("I'm waiting for data now\n");
-            sleep(2);
-            break;
-            case '2':
             printf("id:");
             fflush(stdin);
             while(scanf("%d",&id)!=1)
@@ -1563,8 +1619,11 @@ void deletemate(int gid,int cfd)
             pthread_mutex_unlock(&mutex6);
             if (find==0)
             printf("该用户不是群成员!\n");
+            printf("输入回车继续\n");
+            while(getchar()!='\n');
+            simple=1;
             break;
-            case '3':
+            case '2':
             simple=1;
             break;
             default:
@@ -1578,7 +1637,7 @@ void deletemate(int gid,int cfd)
 }
 void setadmin(int gid,int cfd)
 {
-        char a;
+     char a;
      int simple=0;
      int id;
      int find=0;
@@ -1595,9 +1654,9 @@ void setadmin(int gid,int cfd)
         }
         pthread_mutex_unlock(&mutex6);
        
-        printf("输入'1'来刷新状态\n");
-        printf("输入'2'来选择一个群成员(id)\n");
-        printf("输入'3'来退出查看\n");
+  //      printf("输入'1'来刷新状态\n");
+        printf("输入'1'来选择一个群成员(id)\n");
+        printf("输入'2'来退出查看\n");
         setadmin1:
         fflush(stdin);
         scanf("%c",&a);
@@ -1605,14 +1664,6 @@ void setadmin(int gid,int cfd)
         switch(a)
         {
             case '1':
-            List_Free(glist,people_node_t);
-            struct work temp={'v',0,0,"","",0};
-            temp.sid=gid;
-            send(cfd,&temp,sizeof(struct work),0);
-            printf("I'm waiting for data now\n");
-            sleep(2);
-            break;
-            case '2':
             printf("id:");
             fflush(stdin);
             while(scanf("%d",&id)!=1)
@@ -1644,12 +1695,17 @@ void setadmin(int gid,int cfd)
             pthread_mutex_unlock(&mutex6);
             if (find==0)
             printf("该用户不是群成员!\n");
+            printf("输入回车继续\n");
+            while(getchar()!='\n');
+            simple=1;
             break;
-            case '3':
+            case '2':
             simple=1;
             break;
             default:
             printf("不是一个合法选项,请重新输入\n");
+            printf("输入回车继续\n");
+              while(getchar()!='\n');
            goto setadmin1;
             break;
         }
@@ -1676,7 +1732,7 @@ void managegroup(int cfd)
     fflush(stdin);
     while(scanf("%d",&id)!=1)
     {
-        printf("输入的不是有效的id!请重新输入\n");
+        printf("输入的不是一个数字!请重新输入\n");
         while(getchar()!='\n');
     }
     while(getchar()!='\n');
@@ -1690,8 +1746,9 @@ void managegroup(int cfd)
     }
     if (i==0)
     {
-        printf("输入的不是有效的id!请重新输入\n");
-        goto mangroup;
+        printf("输入的不是有效的id!按回车继续\n");
+         while(getchar()!='\n');
+        return;
     }
     if (p->data.power==2)
     {
@@ -1713,6 +1770,18 @@ void getgrequst(group_node_t* temp,int cfd)   //未完成
     int simple=0;
     while(1)
     {
+        allcansee=-1;
+            List_Free(gyan,yan_node_t);
+            struct work temp1={'r',0,0,"","",0};
+            temp1.sid=myid;
+            temp1.rid=temp->data.gid;
+            send(cfd,&temp1,sizeof(struct work),0);
+            while (allcansee==-1)
+            {
+                printf("I'm waiting for data now\n");
+                sleep(1);
+                system("clear");
+            }
         system("clear");
           printf("============================ 群组管理 ============================\n");
         pthread_mutex_lock(&mutex5);
@@ -1732,9 +1801,9 @@ void getgrequst(group_node_t* temp,int cfd)   //未完成
         }
         pthread_mutex_unlock(&mutex5);
        
-        printf("                        输入'1'来刷新验证消息表\n");
-        printf("                        输入'2'来选择一条信息操作\n");
-        printf("                        输入'3'来退出\n");
+     //   printf("                        输入'1'来刷新验证消息表\n");
+        printf("                        输入'1'来选择一条信息操作\n");
+        printf("                        输入'2'来退出\n");
         getgrequst1:
         fflush(stdin);
         scanf("%c",&a);
@@ -1742,18 +1811,9 @@ void getgrequst(group_node_t* temp,int cfd)   //未完成
         switch(a)
         {
             case '1':
-            List_Free(gyan,yan_node_t);
-            struct work temp1={'r',0,0,"","",0};
-            temp1.sid=myid;
-            temp1.rid=temp->data.gid;
-            send(cfd,&temp1,sizeof(struct work),0);
-            printf("I'm waiting for data now\n");
-            sleep(2);
-            break;
-            case '2':
             yanzhengg(cfd,temp->data.gid);
             break;
-            case '3':
+            case '2':
             simple=1;
             break;
             default:
@@ -1768,11 +1828,27 @@ void getgrequst(group_node_t* temp,int cfd)   //未完成
 void owner(group_node_t* temp,int cfd) //主人
 {
     int simple=0;
-    struct work temp1;
-    temp1.tye='y';
-    temp1.sid=temp->data.gid;
+    struct work temp2;
+    temp2.tye='y';
+    temp2.sid=temp->data.gid;
     while(1)
     {
+        
+
+         allcansee=-1;
+        List_Free(glist,people_node_t);
+        struct work temp1={'v',0,0,"","",0};
+        temp1.sid=temp->data.gid;
+        send(cfd,&temp1,sizeof(struct work),0);
+        while(allcansee==-1)
+        {
+            printf("等待服务器响应\n");
+            sleep(1);
+            system("clear");
+        }
+
+
+
         own:
         system("clear");
           printf("============================ 群组管理 ============================\n");
@@ -1804,7 +1880,7 @@ void owner(group_node_t* temp,int cfd) //主人
             deletemate(temp->data.gid,cfd);
             break;
             case '4':
-            send(cfd,&temp1,sizeof(temp1),0);
+            send(cfd,&temp2,sizeof(temp1),0);
             simple=1;
             break;
             case '5':
@@ -1949,9 +2025,6 @@ void grouphistory(int cfd)
         while(getchar()!='\n');
         return;
     }
-    struct work temp;
-    temp.tye='2';temp.sid=myid;temp.rid=id;send(cfd,&temp,sizeof(temp),0);
-    temp.tye='3';send(cfd,&temp,sizeof(temp),0);
     fetchallgmes(cfd,id);
 }
 void transfile(int cfd)
@@ -1995,6 +2068,7 @@ void sfile(int cfd)
 {
     int id;
     int fd;
+     allcansee=-1;
     char filename[30];
     printf("输入你想传输的对象id号\n");
     if (scanf("%d",&id)!=1||!ismyfriend(id))
@@ -2022,12 +2096,7 @@ void sfile(int cfd)
     strcpy(temp.name,find_file_name(filename));
     send(cfd,&temp,sizeof(temp),0);
     sendfile(cfd,fd,NULL,stat_buf.st_size);
-    allcansee=0;
-    while(!allcansee)
-    {
-        printf("等待服务器响应\n");
-        sleep(1);
-    }
+
 }
 void rfile(int cfd)
 {   file asdsa;
@@ -2036,6 +2105,22 @@ void rfile(int cfd)
     char a;
     while(1)
     {
+        allcansee=-1;
+         List_Free(flist,file_node_t);
+            struct work temp1={'5',0,0,"","",0};
+            temp1.sid=myid;
+            send(cfd,&temp1,sizeof(struct work),0);
+            
+            while(1)
+            {
+                if (allcansee==-1)
+                {
+                    printf("等待客户端响应\n");
+                    sleep(1);
+                }
+                else break;
+            }
+
         system("clear");
     printf("============================ 传输文件 ============================\n");
     printf("                    %-20s%-20s%-20s%-20s%-20s\n","id","sid","文件名","大小","是否读取过");
@@ -2048,7 +2133,7 @@ void rfile(int cfd)
     }
     printf("                        输入'1'来选择一个文件下载\n");
     printf("                        输入'2'来在服务器上删除一个文件\n");
-    printf("                        输入'3'来刷新数据\n");
+   // printf("                        输入'3'来刷新数据\n");
     printf("                        输入'4'来退出本界面\n");
      rfile1:
         fflush(stdin);
@@ -2056,18 +2141,6 @@ void rfile(int cfd)
         while(getchar()!='\n');
         switch(a)
         {
-            case '3':
-            List_Free(flist,file_node_t);
-            struct work temp1={'5',0,0,"","",0};
-            temp1.sid=myid;
-            send(cfd,&temp1,sizeof(struct work),0);
-            allcansee=0;
-            while(!allcansee)
-            {
-                sleep(1);
-            printf("I'm waiting for data now\n");
-            }
-            break;
             case '1':
             loadfile(cfd);
             break;
