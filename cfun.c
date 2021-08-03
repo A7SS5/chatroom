@@ -123,6 +123,7 @@ void *ralt(void* temp)
             if (s1.rid==0)
             {
                 i=0;
+                allcansee=1;
                 pthread_mutex_unlock(&mutex);
                 break;
             }
@@ -362,9 +363,7 @@ void *ralt(void* temp)
 
         close(out);
         break;
-        case 'x':
-        allcansee=1;
-        break;
+        
         }
     
     }
@@ -537,6 +536,7 @@ void fetchallfriend(int cfd)
      int simple=0;
     while(1)
     {
+        allcansee=-1;
         system("clear");
         pthread_mutex_lock(&mutex);
         people_node_t *p;
@@ -569,12 +569,13 @@ void fetchallfriend(int cfd)
             {
                  pthread_mutex_lock(&mutex);
                 
-                if (List_IsEmpty(list))
+                if (allcansee==-1)
                 {
                     printf("等待服务器响应\n");
                      pthread_mutex_unlock(&mutex);
+                     sleep(1);
                 }
-                else {
+                else {allcansee=-1;
                    pthread_mutex_unlock(&mutex);
                     break;
                    }
@@ -594,8 +595,8 @@ void fetchallfriend(int cfd)
     
 }
 void add_friend(int cfd)
-{
-    int id;
+{           allcansee=-1;
+            int id;
             printf("请输入你想添加的id号\n");
             fflush(stdin);
             if(scanf("%d",&id)!=1)
@@ -618,11 +619,14 @@ void add_friend(int cfd)
             ss.tye='d';
             ss.rid=id;
             ss.sid=myid;
-            allcansee=-1;
+            int i=0;
             send(cfd,&ss,sizeof(ss),0);
             while (allcansee==-1)
             {
                 printf("等待客户端响应\n");
+                i++;
+                if (i==5)
+                 send(cfd,&ss,sizeof(ss),0);
                 sleep(1);
             }
             if (allcansee==1)
@@ -635,8 +639,9 @@ void add_friend(int cfd)
             else if(allcansee==0)
             {
                 printf("id:%d 用户不存在\n",id);
+                 sleep(1);
             }
-            allcansee=-1;
+            
         
 
    
@@ -846,8 +851,8 @@ void creategroup(int cfd)
     strcpy(test.name,usrname);
     test.tye='o';
     test.sid=myid;
+     allcansee=-1;
     send(cfd,&test,sizeof(test),0);
-    allcansee=-1;
     while(allcansee==-1)
     {
         sleep(1);
@@ -857,6 +862,7 @@ void creategroup(int cfd)
         printf("该群组已经存在！\n");
     }
     else printf("已成功建立群组\n");
+     allcansee=-1;
     printf("输入回车来返回上层界面\n");
     while(getchar()!='\n');
 }
