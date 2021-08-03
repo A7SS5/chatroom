@@ -56,6 +56,7 @@ int main()
     {
         printf ("服务器未响应...........\n");
         sleep(3);
+        system("clear");
     }
     int t=5;
     struct work test={'a',0,0,"","",0};

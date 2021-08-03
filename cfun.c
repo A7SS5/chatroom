@@ -122,8 +122,6 @@ void *ralt(void* temp)
         case 'c':
             if (s1.rid==0)
             {
-                allcansee=1;
-                printf("allcansee=1\n");
                 i=0;
                 pthread_mutex_unlock(&mutex);
                 break;
@@ -183,10 +181,16 @@ void *ralt(void* temp)
             {
                 printf("\n                                        %s:%d\n","id:",s1.sid);
                 printf("                                        %-45s\n",s1.mes);
+                   nmes=(mes_node_t*)malloc(sizeof(mes_node_t));
+                nmes->data.sid=s1.sid;
+                strcpy(nmes->data.mes,s1.mes);  
+                List_AddTail(mes2,nmes);
                  s1.tye='l';
+
             send(cfd,&s1,sizeof(s1),0);
+            break;
             }
-            else printf("id:%d给您发了一条新的消息\n",s1.sid);
+            else printf("id:%d给您发了一条新的消息",s1.sid);
             
         }
         if (s1.sid==0) //发送者id不可能为0,表示结束并放开锁
@@ -202,7 +206,8 @@ void *ralt(void* temp)
                 k++;
                 nmes=(mes_node_t*)malloc(sizeof(mes_node_t));
                 nmes->data.sid=s1.sid;
-                strcpy(nmes->data.mes,s1.mes);           
+                strcpy(nmes->data.mes,s1.mes);  
+                printf("id:%d给您发了一条新的消息\n",s1.sid);         
   //              printf("%-20d%-20s%-20d\n",s1.rid,s1.name,s1.ret);
                 List_AddTail(mes1,nmes);                
         break;
@@ -560,14 +565,20 @@ void fetchallfriend(int cfd)
             struct work temp={'c',0,0,"","",0};
             temp.sid=myid;
             send(cfd,&temp,sizeof(struct work),0);
-            allcansee=-1;
-            while(allcansee==-1)
+            while(1)
             {
-                sleep(1);
-                printf("等待服务器响应\n");
-                printf("allcansee=%d",allcansee);
+                 pthread_mutex_lock(&mutex);
+                
+                if (List_IsEmpty(list))
+                {
+                    printf("等待服务器响应\n");
+                     pthread_mutex_unlock(&mutex);
+                }
+                else {
+                   pthread_mutex_unlock(&mutex);
+                    break;
+                   }
             }
-             allcansee=-1;
             break;
             case '2':
             simple=1;
@@ -607,8 +618,8 @@ void add_friend(int cfd)
             ss.tye='d';
             ss.rid=id;
             ss.sid=myid;
-            send(cfd,&ss,sizeof(ss),0);
             allcansee=-1;
+            send(cfd,&ss,sizeof(ss),0);
             while (allcansee==-1)
             {
                 printf("等待客户端响应\n");
@@ -625,7 +636,7 @@ void add_friend(int cfd)
             {
                 printf("id:%d 用户不存在\n",id);
             }
-    
+            allcansee=-1;
         
 
    
@@ -1058,6 +1069,7 @@ void readsmes(int cfd)
    system("clear");
         printf("============================ 聊天记录 ============================\n");
         printf("                        %-20s%-20s%-20s\n","id","用户名","消息数");
+        
         List_ForEach(list,p)
         {
             i=0;
@@ -1086,12 +1098,12 @@ void readsmes(int cfd)
     {
         if (q->data.sid==id)
         {
-            printf("                                                id:%d",id);
+            printf("                                                id:%d\n",id);
             printf("                                                %s",q->data.mes);
         }
         else if (q->data.rid==id)
         {
-            printf("您:\n");
+            printf("您发出:\n");
             printf("%s",q->data.mes);
         }
     }
@@ -1147,6 +1159,7 @@ void nreadsmes(int cfd)
     struct work test;
      test.tye='l';
       test.rid=myid;
+      mes_node_t* trans;
        system("clear");
         printf("============================ 聊天记录 ============================\n");
     printf("                        %-20s%-20s%-20s\n","id","用户名","消息数");
@@ -1179,13 +1192,17 @@ void nreadsmes(int cfd)
         {
             if (q->data.sid==id)
             {
+                trans=q->prev;
                 test.sid=q->data.sid;
                 strcpy(test.mes,q->data.mes);
                 send(cfd,&test,sizeof(test),0);
+                 List_DelNode(q);
+                List_AddTail(mes2,q);
                 printf("id:%d 用户名:%s\n%s",id,getname(id),q->data.mes);
+                q=trans;
             }
+            
         }
-        List_Free(mes1,mes_node_t);
         printf("输入'1'来继续查看\n");
         printf("输入'2'来退出查看\n");
           mesid1:
@@ -1253,11 +1270,8 @@ void fetchallmes(int cfd)
 {
     int simple=0;
      char a;
-     struct work temp;
     while(1)
     {
-         temp.tye='m';
-     send(cfd,&temp,sizeof(struct work),0);
          system("clear");
         printf("============================ 欢迎使用聊天室 ============================\n");
         printf("                        输入'1'来查看未读消息\n");
