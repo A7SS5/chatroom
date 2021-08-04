@@ -1252,11 +1252,11 @@ void readgmes(int cfd,int gid)
         if(allcansee==-1)
         {
             time++;
-                         if (time%5==0)
-                         {
-                             List_Free(gmes1,mes_node_t);
-                             send(cfd,&temp,sizeof(temp),0);
-                         }
+                if (time%10==0)
+                {
+                    List_Free(gmes1,mes_node_t);
+                    send(cfd,&temp,sizeof(temp),0);
+                }
              pthread_mutex_unlock(&mutex10);
             printf("等待服务器响应\n");
             sleep(1);
