@@ -17,6 +17,7 @@ pthread_mutex_t mutex6 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex7 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex8 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex9 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex10 = PTHREAD_MUTEX_INITIALIZER;
 yan_list_t list1=NULL;
 people_list_t list=NULL;
 people_list_t glist=NULL;

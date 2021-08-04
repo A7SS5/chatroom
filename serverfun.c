@@ -292,7 +292,7 @@ int use_mysql_3(int id,MYSQL mysql1)
 {
 		
 	char string[120];
-	sprintf(string,"select uid,用户名 FROM 用户数据,friend WHERE friend.sid=%d AND 用户数据.uid=friend.rid ORDER BY uid",id);
+	sprintf(string,"select distinct uid,用户名 FROM 用户数据,friend WHERE friend.sid=%d AND 用户数据.uid=friend.rid ORDER BY uid",id);
 	printf("%s\n",string);
 	int                 i;
 	int                 ret;

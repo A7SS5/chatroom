@@ -24,22 +24,35 @@ extern pthread_mutex_t mutex6;
 extern pthread_mutex_t mutex7;
 extern pthread_mutex_t mutex8;
 extern pthread_mutex_t mutex9;
+extern pthread_mutex_t mutex10;
 void getgroupmates(int gid,int cfd)
 {
       char a;
      int simple=0;
     while(1)
     {
+        pthread_mutex_lock(&mutex10);
         allcansee=-1;
+        pthread_mutex_unlock(&mutex10);
         List_Free(glist,people_node_t);
         struct work temp={'v',0,0,"","",0};
         temp.sid=gid;
         send(cfd,&temp,sizeof(struct work),0);
-        while(allcansee==-1)
+        
+        while(1)
         {
-            printf("等待服务器响应\n");
-            sleep(1);
-            system("clear");
+             pthread_mutex_lock(&mutex10);
+            if(allcansee==-1)
+            {
+                printf("等待服务器响应\n");
+                sleep(1);
+                 pthread_mutex_unlock(&mutex10);
+                system("clear");
+              
+            }
+            else { pthread_mutex_unlock(&mutex10);
+                break;
+            }   
         }
 
         system("clear");
@@ -128,7 +141,9 @@ void *ralt(void* temp)
             if (s1.rid==0)
             {
                 i=0;
+                 pthread_mutex_lock(&mutex10);
                 allcansee=1;
+                 pthread_mutex_unlock(&mutex10);
                 pthread_mutex_unlock(&mutex);
                 break;
             }
@@ -144,11 +159,13 @@ void *ralt(void* temp)
                 List_AddTail(list,new);                
         break;
         case 'd':
+         pthread_mutex_lock(&mutex10);
             if (s1.ret==0)
             {
                 allcansee=0;
             }
             else allcansee=1;
+             pthread_mutex_unlock(&mutex10);
             break;
         case 'f': //'f'在后期考虑丢弃,因为此功能没啥用,验证消息不用单独来接
                 old=(yan_node_t*)malloc(sizeof(yan_node_t));
@@ -233,7 +250,8 @@ void *ralt(void* temp)
                 strcpy(lmes->data.mes,s1.mes);
                 List_AddTail(mes2,lmes); 
         break;
-        case 'o':
+        case 'o': 
+        pthread_mutex_lock(&mutex10);
          if (s1.ret==0)
             {
                 allcansee=0;
@@ -242,12 +260,15 @@ void *ralt(void* temp)
                 allcansee=1;
                 printf("您创建的群组名为%s,ID号为%d",s1.name,s1.rid);
                 }
+                 pthread_mutex_unlock(&mutex10);
             break;
         case 'p':
         if (s1.rid==0) //发送者id不可能为0,表示结束并放开锁
         {
             m=0;
+             pthread_mutex_lock(&mutex10);
             allcansee=1;
+             pthread_mutex_unlock(&mutex10);
             pthread_mutex_unlock(&mutex4);
             break;
         }
@@ -264,7 +285,9 @@ void *ralt(void* temp)
             if (s1.sid==0)
                 {
                     n=0;
+                     pthread_mutex_lock(&mutex10);
                      allcansee=1;
+                      pthread_mutex_unlock(&mutex10);
                     pthread_mutex_unlock(&mutex5);
                     break;
                 }
@@ -283,12 +306,17 @@ void *ralt(void* temp)
          if (s1.rid==0)
             {
                 o=0;
+                 pthread_mutex_lock(&mutex10);
                 allcansee=1;
+                 pthread_mutex_unlock(&mutex10);
                 pthread_mutex_unlock(&mutex6);
                 break;
             }
                 if (o==0)
+                {
+                List_Free(glist,people_node_t);
                 pthread_mutex_lock(&mutex6);
+                }
                 o++;
                 new=(people_node_t*)malloc(sizeof(people_node_t));
                 new->data.id=s1.rid;
@@ -314,14 +342,19 @@ void *ralt(void* temp)
                 }
         if (s1.sid==0) //发送者id不可能为0,表示结束并放开锁
             {
+                printf("群id:%d有%d条新消息\n",s1.rid,p);
                 p=0;
+                 pthread_mutex_lock(&mutex10);
                 allcansee=1;
+                 pthread_mutex_unlock(&mutex10);
                 pthread_mutex_unlock(&mutex7);
+             
                 break;
             }
                 if (p==0)
                 pthread_mutex_lock(&mutex7);
                 p++;
+                printf("群id:%d有一条新消息\n",s1.rid);
                 nmes=(mes_node_t*)malloc(sizeof(mes_node_t));
                 nmes->data.sid=s1.sid;  //发送者
                 nmes->data.rid=s1.rid;  //群聊id
@@ -333,7 +366,9 @@ void *ralt(void* temp)
         if (s1.sid==0) //发送者id不可能为0,表示结束并放开锁
             {
                 v=0;
+                 pthread_mutex_lock(&mutex10);
                 allcansee=1;
+                 pthread_mutex_unlock(&mutex10);
                 pthread_mutex_unlock(&mutex8);
                 break;
             }
@@ -350,7 +385,9 @@ void *ralt(void* temp)
             {
                 q=0;
                 pthread_mutex_unlock(&mutex9);
+                 pthread_mutex_lock(&mutex10);
                 allcansee=1;
+                 pthread_mutex_unlock(&mutex10);
                 break;
             }
                 if (q==0)
@@ -380,6 +417,7 @@ void *ralt(void* temp)
         close(out);
         break;
         case 'x':
+         pthread_mutex_lock(&mutex10);
             if (s1.ret==0)
             {
                 allcansee=0;
@@ -388,6 +426,7 @@ void *ralt(void* temp)
                 allcansee=1;
                 
                 }
+                 pthread_mutex_unlock(&mutex10);
         break;
         }
     
@@ -565,7 +604,9 @@ void fetchallfriend(int cfd)
      int simple=0;
     while(1)
     {
+         pthread_mutex_lock(&mutex10);
         allcansee=-1;
+         pthread_mutex_unlock(&mutex10);
         system("clear");
         pthread_mutex_lock(&mutex);
         people_node_t *p;
@@ -624,7 +665,9 @@ void fetchallfriend(int cfd)
     
 }
 void add_friend(int cfd)
-{           allcansee=-1;
+{    pthread_mutex_lock(&mutex10);       
+     allcansee=-1;
+      pthread_mutex_unlock(&mutex10);
             int id;
             printf("请输入你想添加的id号\n");
             fflush(stdin);
@@ -650,14 +693,26 @@ void add_friend(int cfd)
             ss.sid=myid;
             int i=0;
             send(cfd,&ss,sizeof(ss),0);
-            while (allcansee==-1)
-            {
-                printf("等待客户端响应\n");
-                i++;
-                if (i==5)
-                 send(cfd,&ss,sizeof(ss),0);
-                sleep(1);
-            }
+           while(1)
+           {
+                pthread_mutex_lock(&mutex10);
+                if (allcansee==-1)
+                {
+                    printf("等待客户端响应\n");
+                    i++;
+                     pthread_mutex_unlock(&mutex10);
+                    if (i==5)
+                    send(cfd,&ss,sizeof(ss),0);
+                    sleep(1);
+                }
+                else {
+                 pthread_mutex_unlock(&mutex10);
+                 break;
+                 }
+           }
+         
+             pthread_mutex_lock(&mutex10);
+             
             if (allcansee==1)
             {struct work dd=ss;
                 printf("id:%d 用户存在,已发出请求\n",id);
@@ -670,7 +725,7 @@ void add_friend(int cfd)
                 printf("id:%d 用户不存在\n",id);
                  sleep(1);
             }
-            
+             pthread_mutex_unlock(&mutex10);
         
 
    
@@ -880,16 +935,26 @@ void creategroup(int cfd)
     strcpy(test.name,usrname);
     test.tye='o';
     test.sid=myid;
+     pthread_mutex_lock(&mutex10);
      allcansee=-1;
+      pthread_mutex_unlock(&mutex10);
     send(cfd,&test,sizeof(test),0);
     int i=0;
-    while(allcansee==-1)
+    while(1)
     {
-        printf("等待服务器响应\n");
-        sleep(1);
-        i++;
-        if (i==5)
-        send(cfd,&test,sizeof(test),0);
+          pthread_mutex_lock(&mutex10);
+        if(allcansee==-1)
+        {
+              pthread_mutex_unlock(&mutex10);
+            printf("等待服务器响应\n");
+            sleep(1);
+            i++;
+            if (i==5)
+            send(cfd,&test,sizeof(test),0);
+        }
+        else{
+            break;
+        }
     }
     if (allcansee==0)
     {
@@ -897,6 +962,7 @@ void creategroup(int cfd)
     }
     else printf("已成功建立群组\n");
      allcansee=-1;
+      pthread_mutex_unlock(&mutex10);
     printf("输入回车来返回上层界面\n");
     while(getchar()!='\n');
 }
@@ -1171,18 +1237,36 @@ void readsmes(int cfd)
 void readgmes(int cfd,int gid)
 {
    mes_node_t *q;
+    pthread_mutex_lock(&mutex10);
    allcansee=-1;
+    pthread_mutex_unlock(&mutex10);
    char *a;
    system("clear");
     struct work temp;
      List_Free(gmes2,mes_node_t);
+     int time=0;
     temp.tye='2';temp.sid=myid;temp.rid=gid;send(cfd,&temp,sizeof(temp),0);
-    while(allcansee==-1)
+   while(1)
+   {
+        pthread_mutex_lock(&mutex10);
+        if(allcansee==-1)
         {
+            time++;
+                         if (time%5==0)
+                         {
+                             List_Free(gmes1,mes_node_t);
+                             send(cfd,&temp,sizeof(temp),0);
+                         }
+             pthread_mutex_unlock(&mutex10);
             printf("等待服务器响应\n");
             sleep(1);
             system("clear");
         }
+        else{
+         pthread_mutex_unlock(&mutex10);
+        break;
+        }
+   }
     a=getgname(gid);
     printf("群组id：%d 群组名:%s\n",gid,a);
     pthread_mutex_lock(&mutex8);
@@ -1281,19 +1365,36 @@ void nreadsmes(int cfd)
 }
 void nreadgmes(int cfd,int gid)
 {
+     pthread_mutex_lock(&mutex10);
     allcansee=-1;
+     pthread_mutex_unlock(&mutex10);
     group_node_t *p;
     mes_node_t *q;
     int i=0;
     List_Free(gmes1,mes_node_t);
      struct work temp;
         temp.sid=myid;temp.rid=gid;
+        int time=0;
         temp.tye='3';send(cfd,&temp,sizeof(temp),0);
-        while(allcansee==-1)
-        {
-            printf("等待服务器响应\n");
-            sleep(1);
-            system("clear");
+        while(1){
+                 pthread_mutex_lock(&mutex10);
+                if(allcansee==-1)
+                    {
+                         pthread_mutex_unlock(&mutex10);
+                         time++;
+                         if (time%5==0)
+                         {
+                             List_Free(gmes1,mes_node_t);
+                             send(cfd,&temp,sizeof(temp),0);
+                         }
+                        printf("等待服务器响应\n");
+                        sleep(1);
+                        system("clear");
+                    }
+                    else {
+                         pthread_mutex_unlock(&mutex10);
+                         break;
+                    }
         }
     system("clear");
     struct work test;
@@ -1489,10 +1590,17 @@ void joingroup(int cfd)
     temp.rid=id;
     temp.tye='p';
     send(cfd,&temp,sizeof(temp),0);
-     allcansee=-1;
-    while(allcansee==-1)
-    {
-        sleep(1);
+      pthread_mutex_lock(&mutex10);
+      allcansee=-1;
+       pthread_mutex_unlock(&mutex10);
+    while(1)
+    {  pthread_mutex_lock(&mutex10);
+         if(allcansee==-1)
+            {
+                 pthread_mutex_unlock(&mutex10);
+                sleep(1);
+            }
+            else break;
     }
     if (allcansee==0)
     {
@@ -1502,6 +1610,7 @@ void joingroup(int cfd)
     {
         printf("已成功发出请求\n");
     }
+    pthread_mutex_unlock(&mutex10);
     printf("按下回车键返回上层界面\n");
     while(getchar()!='\n');
 }
@@ -1512,7 +1621,9 @@ void getgroup(int cfd)
     int simple=0;
     while(1)
     {
+        pthread_mutex_lock(&mutex10);
         allcansee=-1;
+        pthread_mutex_unlock(&mutex10);
         system("clear");
         pthread_mutex_lock(&mutex4);
         printf("%-20s%-20s\n","群组id","群组名称");
@@ -1539,11 +1650,18 @@ void getgroup(int cfd)
             send(cfd,&test,sizeof(test),0);
             while(1)
             {
+                 pthread_mutex_lock(&mutex10);
                 if (allcansee==-1)
                 {
+                     pthread_mutex_unlock(&mutex10);
                     printf("等待服务器响应\n");
+                    sleep(1);
                 }
-                else break;
+                else {
+                     pthread_mutex_unlock(&mutex10);
+                    break;
+                 }
+                    
             }
             break;
             case '2':
@@ -1770,18 +1888,28 @@ void getgrequst(group_node_t* temp,int cfd)   //未完成
     int simple=0;
     while(1)
     {
+        pthread_mutex_lock(&mutex10);
         allcansee=-1;
+        pthread_mutex_unlock(&mutex10);
             List_Free(gyan,yan_node_t);
             struct work temp1={'r',0,0,"","",0};
             temp1.sid=myid;
             temp1.rid=temp->data.gid;
             send(cfd,&temp1,sizeof(struct work),0);
-            while (allcansee==-1)
-            {
-                printf("I'm waiting for data now\n");
-                sleep(1);
-                system("clear");
-            }
+                while(1)
+                {   pthread_mutex_lock(&mutex10);
+                    if (allcansee==-1)
+                    {
+                        printf("I'm waiting for data now\n");
+                           pthread_mutex_unlock(&mutex10);
+                        sleep(1);
+                        system("clear");
+                    }
+                    else {
+                        pthread_mutex_unlock(&mutex10);
+                        break;
+                    }
+                }
         system("clear");
           printf("============================ 群组管理 ============================\n");
         pthread_mutex_lock(&mutex5);
@@ -1834,17 +1962,33 @@ void owner(group_node_t* temp,int cfd) //主人
     while(1)
     {
         
-
+        pthread_mutex_lock(&mutex10);
          allcansee=-1;
+         pthread_mutex_unlock(&mutex10);
         List_Free(glist,people_node_t);
         struct work temp1={'v',0,0,"","",0};
+        int time=0;
         temp1.sid=temp->data.gid;
         send(cfd,&temp1,sizeof(struct work),0);
-        while(allcansee==-1)
+        while(1)
         {
-            printf("等待服务器响应\n");
-            sleep(1);
-            system("clear");
+            pthread_mutex_lock(&mutex10);
+            if(allcansee==-1)
+            {
+                pthread_mutex_unlock(&mutex10);
+                time++;
+                if(time%5==0)
+                {
+                    send(cfd,&temp1,sizeof(struct work),0);
+                }
+                printf("等待服务器响应\n");
+                sleep(1);
+                system("clear");
+            }
+            else{
+                pthread_mutex_unlock(&mutex10);
+                break;
+            }
         }
 
 
@@ -1903,6 +2047,35 @@ void admin(group_node_t* temp,int cfd)  //管理员
      int simple=0;
     while(1)
     {
+          pthread_mutex_lock(&mutex10);
+         allcansee=-1;
+         pthread_mutex_unlock(&mutex10);
+        List_Free(glist,people_node_t);
+        struct work temp1={'v',0,0,"","",0};
+        temp1.sid=temp->data.gid;
+        int time=0;
+        send(cfd,&temp1,sizeof(struct work),0);
+        while(1)
+        {
+            pthread_mutex_lock(&mutex10);
+            if(allcansee==-1)
+            {
+                pthread_mutex_unlock(&mutex10);
+                printf("等待服务器响应\n");
+                 time++;
+                if(time%5==0)
+                {
+                    send(cfd,&temp1,sizeof(struct work),0);
+                }
+                sleep(1);
+                system("clear");
+            }
+            else{
+                pthread_mutex_unlock(&mutex10);
+                break;
+            }
+        }
+
        admin1:
         system("clear");
         printf("============================ 群组管理 ============================\n");
@@ -1952,6 +2125,36 @@ void dog(group_node_t* temp,int cfd) //普通群员
      int simple=0;
     while(1)
     {
+
+          pthread_mutex_lock(&mutex10);
+         allcansee=-1;
+         pthread_mutex_unlock(&mutex10);
+        List_Free(glist,people_node_t);
+        int time=0;
+        struct work temp1={'v',0,0,"","",0};
+        temp1.sid=temp->data.gid;
+        send(cfd,&temp1,sizeof(struct work),0);
+        while(1)
+        {
+            pthread_mutex_lock(&mutex10);
+            if(allcansee==-1)
+            {
+                pthread_mutex_unlock(&mutex10);
+                printf("等待服务器响应\n");
+                 time++;
+                if(time%5==0)
+                {
+                    send(cfd,&temp1,sizeof(struct work),0);
+                }
+                sleep(1);
+              //  system("clear");
+            }
+            else{
+                pthread_mutex_unlock(&mutex10);
+                break;
+            }
+        }
+
        dog1:
         system("clear");
         char a;
@@ -2068,7 +2271,6 @@ void sfile(int cfd)
 {
     int id;
     int fd;
-     allcansee=-1;
     char filename[30];
     printf("输入你想传输的对象id号\n");
     if (scanf("%d",&id)!=1||!ismyfriend(id))
@@ -2089,21 +2291,31 @@ void sfile(int cfd)
     {
         printf("open %s\n failed\n",filename);
         perror("open");
+        return;
+        printf("输入回车继续\n");
+        while(getchar()!='\n');
     }
     struct stat stat_buf;
     fstat(fd,&stat_buf);
     temp.ret=stat_buf.st_size;
     strcpy(temp.name,find_file_name(filename));
+    pthread_mutex_lock(&mutex10);
+    allcansee=-1;
+    pthread_mutex_unlock(&mutex10);
     send(cfd,&temp,sizeof(temp),0);
     while(1)
     {
+        pthread_mutex_lock(&mutex10);
         if (allcansee==-1)
         {
             printf("等待服务器响应\n");
+             pthread_mutex_unlock(&mutex10);
             sleep(1);
             system("clear");
         }
-        else break;
+        else {pthread_mutex_unlock(&mutex10);
+            break;
+        }
     }
     sendfile(cfd,fd,NULL,stat_buf.st_size);
 
@@ -2115,20 +2327,33 @@ void rfile(int cfd)
     char a;
     while(1)
     {
+        pthread_mutex_lock(&mutex10);
         allcansee=-1;
+        pthread_mutex_unlock(&mutex10);
          List_Free(flist,file_node_t);
+         int time=0;
             struct work temp1={'5',0,0,"","",0};
             temp1.sid=myid;
             send(cfd,&temp1,sizeof(struct work),0);
             
             while(1)
             {
+                pthread_mutex_lock(&mutex10);
                 if (allcansee==-1)
                 {
+                      pthread_mutex_unlock(&mutex10);
+                    time++;
+                    if(time%5==0)
+                    {
+                          send(cfd,&temp1,sizeof(struct work),0);
+                    }
                     printf("等待客户端响应\n");
                     sleep(1);
                 }
-                else break;
+                else {
+            pthread_mutex_unlock(&mutex10);
+            break;
+                }
             }
 
         system("clear");

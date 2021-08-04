@@ -5,6 +5,7 @@
 people_list_t list=NULL;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex2 = PTHREAD_MUTEX_INITIALIZER;
 void mylogin(struct work s1,struct s1* s)
 {
     struct work rets;
@@ -73,12 +74,14 @@ void *solve(void* temp)
     if (ret==0)
     {
         people_node_t* p;
+        pthread_mutex_lock(&mutex2);
         List_ForEach(list,p)
         {
             if (p->data.fd==s->conn_fd)
              {List_FreeNode(p);
             break;}
         }
+         pthread_mutex_unlock(&mutex2);
         epoll_ctl(s->epfd,EPOLL_CTL_DEL,s->conn_fd,NULL);
         close(s->conn_fd);
         printf("对端已经关闭了");
