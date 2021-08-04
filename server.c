@@ -68,7 +68,8 @@ void *solve(void* temp)
     struct epoll_event ev;
     ev.data.fd = s->conn_fd;
      char *filename;
-    ev.events = EPOLLIN;
+       struct work sim;
+    ev.events = EPOLLIN |EPOLLONESHOT;
     printf("efd:%d cfd:%d\n",s->epfd,s->conn_fd);
     int ret = recv(s->conn_fd,&s1,sizeof(struct work),0);
     if (ret==0)
@@ -124,10 +125,19 @@ void *solve(void* temp)
         delete_friend(s1);
         break;
         case 'k':
-        ssend_mes(s1);
+       ev.events = EPOLLIN |EPOLLONESHOT;
+        epoll_ctl(s->epfd,EPOLL_CTL_MOD,s->conn_fd,&ev);
+         ssend_mes(s1);
+        pthread_detach(pthread_self());
+        pthread_exit(0);
+        return 0;
         break;
         case 'l':
-        read_mes(s1);
+         ev.events = EPOLLIN |EPOLLONESHOT;
+        epoll_ctl(s->epfd,EPOLL_CTL_MOD,s->conn_fd,&ev);
+          read_mes(s1);
+        pthread_detach(pthread_self());
+        pthread_exit(0);
         break;
         case 'm':
         printf("m\n");
@@ -180,8 +190,7 @@ void *solve(void* temp)
         getallngmes(s1.rid,s1.sid,s->conn_fd);
         break;
         case '4':
-        epoll_ctl(s->epfd,EPOLL_CTL_DEL,s->conn_fd,NULL);
-        struct work sim;
+    //    epoll_ctl(s->epfd,EPOLL_CTL_DEL,s->conn_fd,NULL);
         sim.tye='d';
         send(s->conn_fd,&sim,sizeof(struct work),0);
         filename=genRandomString(4);
@@ -194,7 +203,7 @@ void *solve(void* temp)
             write(out,buf,num);
         }
         
-          epoll_ctl(s->epfd,EPOLL_CTL_ADD,s->conn_fd,&ev);
+   //       epoll_ctl(s->epfd,EPOLL_CTL_ADD,s->conn_fd,&ev);
         savefile(s1,filename);
         close(out);
         break;
@@ -210,7 +219,8 @@ void *solve(void* temp)
         default:
         printf("not really:%c\n",s1.tye);
     }
-     printf("%s结束\n",s1.mes);
+    printf("%s结束\n",s1.mes);
+    epoll_ctl(s->epfd,EPOLL_CTL_MOD,s->conn_fd,&ev);
     pthread_detach(pthread_self());
     pthread_exit(0);
     return 0;
@@ -272,7 +282,7 @@ int main()
                 
 
                 ev.data.fd= conn_fd;
-                ev.events =EPOLLIN ;//| EPOLLONESHOT | EPOLLRDHUP;
+                ev.events =EPOLLIN | EPOLLONESHOT | EPOLLRDHUP;
                 epoll_ctl(epfd,EPOLL_CTL_ADD,conn_fd,&ev);
 
             }
