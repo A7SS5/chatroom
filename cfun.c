@@ -171,8 +171,23 @@ void *ralt(void* temp)
                 old=(yan_node_t*)malloc(sizeof(yan_node_t));
                 old->data.sid=s1.sid;
                 strcpy(old->data.name,s1.name);
-                old->data.type=1;
+                old->data.type=s1.ret;
                 old->data.xu=0;
+                if (s1.ret==0)
+                {   people_node_t *p,*ps;
+                    pthread_mutex_lock(&mutex);
+                    List_ForEach(list,p)
+                    {
+                        if(p->data.id==s1.sid)
+                        {
+                            break;
+                        }
+                    }
+                    ps=p;
+                    (p->prev)->next=p->next;
+                    List_FreeNode(p);
+                     pthread_mutex_unlock(&mutex);
+                }
                 printf("您有一条新的验证消息\n");
  //               printf("%-20d%-20s%-20d\n",s1.sid,s1.name,1);
                 List_AddTail(list1,old);      
@@ -182,6 +197,9 @@ void *ralt(void* temp)
             {
                 printf("你有%d条验证消息等待处理\n",j);
                 j=0;
+                pthread_mutex_lock(&mutex10);
+                allcansee=1;
+                pthread_mutex_unlock(&mutex10);
                 pthread_mutex_unlock(&mutex1);
                 break;
             }
@@ -229,7 +247,8 @@ void *ralt(void* temp)
                 k++;
                 nmes=(mes_node_t*)malloc(sizeof(mes_node_t));
                 nmes->data.sid=s1.sid;
-                strcpy(nmes->data.mes,s1.mes);  
+                strcpy(nmes->data.mes,s1.mes);
+                if(siliao==0)
                 printf("id:%d给您发了一条新的消息\n",s1.sid);         
   //              printf("%-20d%-20s%-20d\n",s1.rid,s1.name,s1.ret);
                 List_AddTail(mes1,nmes);                
@@ -405,7 +424,7 @@ void *ralt(void* temp)
         case 'w':
          out=creat(s1.name,0664);
         int len=s1.ret;
-        char buf[1024];
+        char buf[2000];
         int num;
         while(len>0 ){
             num=recv(cfd,buf,1024,0); 
@@ -415,6 +434,9 @@ void *ralt(void* temp)
         }
 
         close(out);
+        pthread_mutex_lock(&mutex10);
+        allcansee=1;
+        pthread_mutex_unlock(&mutex10);
         break;
         case 'x':
          pthread_mutex_lock(&mutex10);
@@ -554,43 +576,52 @@ void yanzheng(int cfd)
              if (p->data.type==1)
             {
                 printf("%-20s\n","申请");
+            
+                char a;
+                printf("输入'1'来同意此条申请\n");
+                printf("输入'2'来拒绝此条申请\n");
+                yanzheng1:
+                fflush(stdin);
+                printf("your choice:");
+                scanf("%c",&a);
+                while(getchar()!='\n');
+                switch(a)
+                {
+                    case '1':
+                    temp.tye='h';
+                    temp.rid=myid;
+                    temp.sid=p->data.sid;
+                    temp.ret=p->data.type;
+                    printf("已发送处理请求\n");
+                    send(cfd,&temp,sizeof(temp),0);
+                    return;
+                    break;
+                    case '2':
+                    temp.tye='i';
+                    temp.rid=myid;
+                    temp.sid=p->data.sid;
+                    temp.ret=p->data.type;
+                    printf("已发送处理请求\n");
+                    send(cfd,&temp,sizeof(temp),0);
+                    return;
+                    break;
+                    default:
+                    printf("不是一个合法选项，请重新输入\n");
+                    goto yanzheng1;
+                    break;
+                }
             }
-            else if (p->data.type==0)
+             else if (p->data.type==0)
             {
                 printf("%-20s\n","删除");
-            }
-            char a;
-            printf("输入'1'来同意此条申请\n");
-            printf("输入'2'来拒绝此条申请\n");
-            yanzheng1:
-            fflush(stdin);
-            printf("your choice:");
-            scanf("%c",&a);
-            while(getchar()!='\n');
-            switch(a)
-            {
-                case '1':
-                temp.tye='h';
-                temp.rid=myid;
-                temp.sid=p->data.sid;
-                temp.ret=p->data.type;
-                printf("已发送处理请求\n");
-                send(cfd,&temp,sizeof(temp),0);
-                return;
-                break;
-                case '2':
-                temp.tye='i';
-                temp.rid=myid;
-                temp.sid=p->data.sid;
-                temp.ret=p->data.type;
-                printf("已发送处理请求\n");
-                send(cfd,&temp,sizeof(temp),0);
-                return;
-                break;
-                default:
-                printf("不是一个合法选项，请重新输入\n");
-                goto yanzheng1;
-                break;
+                printf("输入回车已读此条验证消息\n");
+                 temp.tye='i';
+                    temp.rid=myid;
+                    temp.sid=p->data.sid;
+                    temp.ret=p->data.type;
+                    send(cfd,&temp,sizeof(temp),0);
+                    while(getchar()!='\n');
+                    return;
             }
             break;
         }
@@ -607,31 +638,7 @@ void fetchallfriend(int cfd)
          pthread_mutex_lock(&mutex10);
         allcansee=-1;
          pthread_mutex_unlock(&mutex10);
-        system("clear");
-        pthread_mutex_lock(&mutex);
-        people_node_t *p;
-        printf("============================ 好友列表 ============================\n");
-        printf("                 %-20s%-20s%-20s\n","id","用户名","在线状态");
-        List_ForEach(list,p)
-        {
-            printf("                 %-20d%-20s",p->data.id,p->data.name);
-            if (p->data.status==1)
-            printf("%-20s","在线");
-            else printf("%-20s","不在线");
-            printf("\n");
-        }
-        pthread_mutex_unlock(&mutex);
-       
-        printf("输入'1'来刷新状态\n");
-        printf("输入'2'来退出查看\n");
-        getfriend1:
-        fflush(stdin);
-        scanf("%c",&a);
-        while(getchar()!='\n');
-        switch(a)
-        {
-            case '1':
-            List_Free(list,people_node_t);
+          List_Free(list,people_node_t);
             struct work temp={'c',0,0,"","",0};
             temp.sid=myid;
             send(cfd,&temp,sizeof(struct work),0);
@@ -650,8 +657,29 @@ void fetchallfriend(int cfd)
                     break;
                    }
             }
-            break;
-            case '2':
+        pthread_mutex_lock(&mutex);
+          system("clear");
+        people_node_t *p;
+        printf("============================ 好友列表 ============================\n");
+        printf("                 %-20s%-20s%-20s\n","id","用户名","在线状态");
+        List_ForEach(list,p)
+        {
+            printf("                 %-20d%-20s",p->data.id,p->data.name);
+            if (p->data.status==1)
+            printf("%-20s","在线");
+            else printf("%-20s","不在线");
+            printf("\n");
+        }
+        pthread_mutex_unlock(&mutex);
+       
+        printf("输入'1'来退出查看\n");
+        getfriend1:
+        fflush(stdin);
+        scanf("%c",&a);
+        while(getchar()!='\n');
+        switch(a)
+        {
+            case '1':
             simple=1;
             break;
             default:
@@ -715,6 +743,7 @@ void add_friend(int cfd)
              
             if (allcansee==1)
             {struct work dd=ss;
+                dd.ret=1;
                 printf("id:%d 用户存在,已发出请求\n",id);
                 dd.tye='f';
                 send(cfd,&dd,sizeof(ss),0);
@@ -751,6 +780,19 @@ void delete_friend(int cfd)
     ss.rid=id;
     ss.sid=myid;
     ss.ret=0;
+    people_node_t *p,*ps;
+    pthread_mutex_lock(&mutex);
+    List_ForEach(list,p)
+    {
+        if(p->data.id==ss.rid)
+        {
+            break;
+        }
+    }
+    ps=p;
+    (p->prev)->next=p->next;
+    List_FreeNode(p);
+        pthread_mutex_unlock(&mutex);
     send(cfd,&ss,sizeof(ss),0);
 }
 int ismyfriend(int id)
@@ -775,7 +817,7 @@ int ismygroup(int gid)
     }
     return 0;
 }
-char *getname(int id) //找到名字，未测试，就个遍历应该没问题
+char *getname(int id) 
 {
     people_node_t*p;
     List_ForEach(list,p)
@@ -787,7 +829,7 @@ char *getname(int id) //找到名字，未测试，就个遍历应该没问题
     printf("error\n");
     return NULL;
 }
-char *getgname(int id) //找到名字，未测试，就个遍历应该没问题
+char *getgname(int id) 
 {
     group_node_t*p;
     List_ForEach(group1,p)
@@ -799,7 +841,7 @@ char *getgname(int id) //找到名字，未测试，就个遍历应该没问题
     printf("error\n");
     return NULL;
 }
-int isonline(int id) //判断是否在线，未测试应该没问题
+int isonline(int id) 
 {
     people_node_t*p;
     List_ForEach(list,p)
@@ -821,8 +863,29 @@ void getrequst(int cfd)
     int simple=0;
     while(1)
     {
+         pthread_mutex_lock(&mutex10);
+        allcansee=-1;
+        pthread_mutex_unlock(&mutex10);
+        List_Free(list1,yan_node_t);
+        struct work temp={'g',0,0,"","",0};
+        temp.sid=myid;
+        send(cfd,&temp,sizeof(struct work),0);
+            while(1)
+            {   pthread_mutex_lock(&mutex10);
+                if (allcansee==-1)
+                {
+                    printf("I'm waiting for data now\n");
+                        pthread_mutex_unlock(&mutex10);
+                    sleep(1);
+                    system("clear");
+                }
+                else {
+                    pthread_mutex_unlock(&mutex10);
+                    break;
+                }
+            }
         system("clear");
-         printf("============================ 好友管理 ============================\n");
+        printf("============================ 好友管理 ============================\n");
         pthread_mutex_lock(&mutex1);
         yan_node_t *p;
         printf("                        %-20s%-20s%-20s%-20s\n","序号","id","用户名","种类");
@@ -840,27 +903,19 @@ void getrequst(int cfd)
         }
         pthread_mutex_unlock(&mutex1);
        
-        printf("输入'1'来刷新验证消息表\n");
-        printf("输入'2'来选择一条信息操作\n");
-        printf("输入'3'来退出\n");
+        printf("输入'1'来选择一条信息操作\n");
+        printf("输入'2'来退出\n");
         getrequst1:
         fflush(stdin);
         scanf("%c",&a);
         while(getchar()!='\n');
         switch(a)
         {
+          
             case '1':
-            List_Free(list1,yan_node_t);
-            struct work temp={'g',0,0,"","",0};
-            temp.sid=myid;
-            send(cfd,&temp,sizeof(struct work),0);
-            printf("I'm waiting for data now\n");
-            sleep(2);
-            break;
-            case '2':
             yanzheng(cfd);
             break;
-            case '3':
+            case '2':
             simple=1;
             break;
             default:
@@ -2291,9 +2346,9 @@ void sfile(int cfd)
     {
         printf("open %s\n failed\n",filename);
         perror("open");
-        return;
-        printf("输入回车继续\n");
+          printf("输入回车继续\n");
         while(getchar()!='\n');
+        return;
     }
     struct stat stat_buf;
     fstat(fd,&stat_buf);
@@ -2314,6 +2369,9 @@ void sfile(int cfd)
             system("clear");
         }
         else {pthread_mutex_unlock(&mutex10);
+            printf("发送成功\n");
+            printf("输入回车返回\n");
+            while(getchar()!='\n');
             break;
         }
     }
@@ -2369,7 +2427,7 @@ void rfile(int cfd)
     printf("                        输入'1'来选择一个文件下载\n");
     printf("                        输入'2'来在服务器上删除一个文件\n");
    // printf("                        输入'3'来刷新数据\n");
-    printf("                        输入'4'来退出本界面\n");
+    printf("                        输入'3'来退出本界面\n");
      rfile1:
         fflush(stdin);
         scanf("%c",&a);
@@ -2382,12 +2440,12 @@ void rfile(int cfd)
             case '2':
             delfile(cfd);
             break;
-            case '4':
+            case '3':
             simple=1;
             break;
             default:
             printf("不是一个合法选项,请重新输入\n");
-           goto rfile1;
+            goto rfile1;
             break;
         }
         if (simple==1)
@@ -2448,6 +2506,9 @@ void loadfile(int cfd)
 {
     struct file_node *q;
         int id;
+         pthread_mutex_lock(&mutex10);
+        allcansee=-1;
+        pthread_mutex_unlock(&mutex10);
         system("clear");
         struct work temp;
         temp.tye='6';
@@ -2471,7 +2532,24 @@ void loadfile(int cfd)
                     strcpy(temp.name,q->data.name);
                     temp.ret=q->data.size;
                     send(cfd,&temp,sizeof(temp),0);
-                    break;
+                      while(1)
+                        {
+                            pthread_mutex_lock(&mutex10);
+                            if (allcansee==-1)
+                            {
+                                system("clear");
+                                pthread_mutex_unlock(&mutex10);
+                                printf("下载中.....\n");
+                                sleep(1);
+                            }
+                            else {
+                            pthread_mutex_unlock(&mutex10);
+                            break;
+                            }
+                        }
+                        printf("下载成功,输入回车继续\n");
+                        while(getchar()!='\n');
+                    return;
                 }
                
         }

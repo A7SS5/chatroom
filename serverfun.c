@@ -1306,6 +1306,14 @@ void delete_friend(struct work temp)
 		MYSQL a;
     a=accept_mysql();
     use_mysql_10(temp,a);
+	if (getstatus(temp.rid))
+	{
+		int cfd=getcfd(temp.rid);
+		printf("cfd:%d",cfd);
+		temp.tye='f';
+		strcpy(temp.name,getname(temp.sid));
+		send(cfd,&temp,sizeof(temp),0);
+	}
     close_mysql(a);
 }
 void ssend_mes(struct work temp)

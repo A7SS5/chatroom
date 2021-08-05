@@ -110,12 +110,34 @@ int main()
      send(cfd,&temp,sizeof(struct work),0);
      temp.tye='q';
     send(cfd,&temp,sizeof(struct work),0);
+      system("clear");
     sleep(2);
     while(1)
     {
+        int i=0;
+        mes_node_t *cus;
+        yan_node_t *cua;
+        file_node_t *cub;
         system("clear");
         printf("============================ 欢迎使用聊天室 ============================\n");
         printf("ID:%d\n",myid);
+              List_ForEach(mes1,cus)
+        {
+            i++;
+        }
+         printf("您有%d条私聊消息未读\n",i);
+        i=0;
+        List_ForEach(list1,cua)
+        {
+            i++;
+        }
+           printf("您有%d条验证请求未处理\n",i);
+        i=0;
+        List_ForEach(flist,cub)
+        {
+            i++;
+        }
+        printf("您有%d个文件待处理\n",i);
         printf("                        输入'a'来查看好友列表(状态)\n");
         printf("                        输入'b'来开启一个私聊(输入id号)\n");
         printf("                        输入'c'来查看消息记录\n");
@@ -181,6 +203,15 @@ int main()
         }
     }
     close(cfd);
- 
+    List_Destroy(list1,struct yan_node);
+    List_Destroy(flist,struct file_node);
+    List_Destroy(gyan,struct yan_node);
+    List_Destroy(list,struct people_node);
+    List_Destroy(glist,struct people_node);
+    List_Destroy(mes1,struct mes_node);
+    List_Destroy(mes2,struct mes_node);
+    List_Destroy(gmes1,struct mes_node);
+    List_Destroy(gmes2,struct mes_node);
+    List_Destroy(group1,struct group_node);
     return 0;
 }
