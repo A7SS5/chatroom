@@ -21,6 +21,15 @@
 #include <string.h>
 
 typedef struct {
+    int id;
+    char name[30];
+}black;
+typedef struct black_node{
+    black data;
+    struct black_node*prev;
+    struct black_node*next;
+}black_node_t,*black_list_t;
+typedef struct {
     int gid;
     char name[30];
     int power;
@@ -64,7 +73,6 @@ typedef struct yan_node
     struct yan_node*prev;
     struct yan_node*next;
 }yan_node_t, *yan_list_t;
-
 typedef struct {
     int id;
     char name[20];
@@ -90,6 +98,7 @@ void *ralt(void* temp);
 int ismyfriend(int id);
 char *getgname(int id);
 void yanzheng(int cfd);
+void block();
 void yanzhengg(int cfd,int gid);
 void fetchallfriend(int cfd);
 void fetchallmes(int cfd);

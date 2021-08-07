@@ -13,6 +13,7 @@ extern mes_list_t gmes1;
 extern mes_list_t gmes2;
 extern group_list_t group1;
 extern yan_list_t gyan;
+extern black_list_t blacklist;
 
 extern pthread_mutex_t mutex;
 extern pthread_mutex_t mutex1;
@@ -644,16 +645,16 @@ void fetchallfriend(int cfd)
             send(cfd,&temp,sizeof(struct work),0);
             while(1)
             {
-                 pthread_mutex_lock(&mutex);
+                 pthread_mutex_lock(&mutex10);
                 
                 if (allcansee==-1)
                 {
                     printf("等待服务器响应\n");
-                     pthread_mutex_unlock(&mutex);
+                     pthread_mutex_unlock(&mutex10);
                      sleep(1);
                 }
                 else {allcansee=-1;
-                   pthread_mutex_unlock(&mutex);
+                   pthread_mutex_unlock(&mutex10);
                     break;
                    }
             }
@@ -1436,12 +1437,6 @@ void nreadgmes(int cfd,int gid)
                 if(allcansee==-1)
                     {
                          pthread_mutex_unlock(&mutex10);
-                         time++;
-                         if (time%5==0)
-                         {
-                             List_Free(gmes1,mes_node_t);
-                             send(cfd,&temp,sizeof(temp),0);
-                         }
                         printf("等待服务器响应\n");
                         sleep(1);
                         system("clear");
@@ -2358,7 +2353,8 @@ void sfile(int cfd)
     allcansee=-1;
     pthread_mutex_unlock(&mutex10);
     send(cfd,&temp,sizeof(temp),0);
-    while(1)
+    sendfile(cfd,fd,NULL,stat_buf.st_size);
+     while(1)
     {
         pthread_mutex_lock(&mutex10);
         if (allcansee==-1)
@@ -2375,7 +2371,6 @@ void sfile(int cfd)
             break;
         }
     }
-    sendfile(cfd,fd,NULL,stat_buf.st_size);
 
 }
 void rfile(int cfd)
@@ -2455,7 +2450,49 @@ void rfile(int cfd)
     }
     
 }
-
+void block()
+{
+    char a;int simple=0;
+    while(1)
+    {
+        system("clear");
+        black_node_t*p;
+     printf("============================ 屏蔽好友 ============================\n");
+    printf("                    %-20s%-20s\n","id","用户名");
+    List_ForEach(blacklist,p)
+    {
+          printf("                    %-20d%-20s",p->data.id,p->data.name);
+    }
+     printf("                        输入'1'屏蔽一个好友\n");
+    printf("                        输入'2'来取消屏蔽\n");
+    printf("                        输入'3'来退出本界面\n");
+     fflush(stdin);
+        scanf("%c",&a);
+        while(getchar()!='\n');
+        switch(a)
+        {
+            case '1':
+           
+            break;
+            case '2':
+            
+            break;
+            case '3':
+            simple=1;
+            break;
+            default:
+            printf("不是一个合法选项,请重新输入\n");
+       //     goto rfile1;
+            break;
+        }
+        if (simple==1)
+        {
+            break;
+        }
+    }
+    
+    
+}
 char *find_file_name(char *name)
 {
 	char *name_start = NULL;
@@ -2563,6 +2600,28 @@ void managefriend(int cfd)
     int simple=0;
     while(1)
     {
+        pthread_mutex_lock(&mutex10);
+        allcansee=-1;
+         pthread_mutex_unlock(&mutex10);
+          List_Free(list,people_node_t);
+            struct work temp={'c',0,0,"","",0};
+            temp.sid=myid;
+            send(cfd,&temp,sizeof(struct work),0);
+            while(1)
+            {
+                 pthread_mutex_lock(&mutex10);
+                
+                if (allcansee==-1)
+                {
+                    printf("等待服务器响应\n");
+                     pthread_mutex_unlock(&mutex10);
+                     sleep(1);
+                }
+                else {allcansee=-1;
+                   pthread_mutex_unlock(&mutex10);
+                    break;
+                   }
+            }
         system("clear");
           printf("============================ 好友管理 ============================\n");
         char a;

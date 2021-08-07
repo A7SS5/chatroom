@@ -28,9 +28,11 @@ mes_list_t gmes2=NULL;
 file_list_t flist=NULL;
 group_list_t group1=NULL;
 yan_list_t gyan=NULL;
+black_list_t blacklist=NULL;
 int main()
 {
      signal(SIGPIPE,SIG_IGN);
+    List_Init(blacklist,struct black_node);
     List_Init(list1,struct yan_node);
     List_Init(flist,struct file_node);
     List_Init(gyan,struct yan_node);
@@ -188,6 +190,9 @@ int main()
         break;
         case 'k':
         transfile(cfd);
+   //     case 'l':
+    //    block();
+     //   break;
         break;
         case 'z':
         simple=1;
