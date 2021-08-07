@@ -425,10 +425,10 @@ void *ralt(void* temp)
         case 'w':
          out=creat(s1.name,0664);
         int len=s1.ret;
-        char buf[2000];
+        char buf[5000];
         int num;
         while(len>0 ){
-            num=recv(cfd,buf,1024,0); 
+            num=recv(cfd,buf,4096,0); 
             len=len-num;
             write(out,buf,num);
            printf("收到%d\n,总共%d",num,len);
