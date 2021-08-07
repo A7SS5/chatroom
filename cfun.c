@@ -431,6 +431,7 @@ void *ralt(void* temp)
             num=recv(cfd,buf,1024,0); 
             len=len-num;
             write(out,buf,num);
+           printf("收到%d\n,总共%d",num,len);
         	memset(buf,'\0',sizeof(buf));
         }
 
