@@ -1159,12 +1159,31 @@ int use_mysql_19(struct work temp,MYSQL mysql1)
 {
 	char string[50];
 	char string2[60];
+	char string3[60];
+	sprintf(string3,"select *from groupmates where gid=%d and pid=%d",temp.rid,temp.sid);
 	sprintf(string,"insert into groupmates values(%d,%d,0)",temp.rid,temp.sid);
 	sprintf(string2,"delete from grequst  where sid=%d and gid=%d and type=%d",temp.sid,temp.rid,temp.ret);
 	MYSQL mysql=mysql1;
 	MYSQL_RES *result=NULL;
 	MYSQL_ROW row;
 	int ret;
+	if (!mysql_query(&mysql,string3))
+	{
+		result = mysql_store_result(&mysql);
+		if(result){
+			if (!(row = mysql_fetch_row(result)))
+			{
+
+				
+				mysql_free_result(result);
+				return 0;
+			}
+
+					
+				}
+				printf("\n");
+		mysql_free_result(result);
+	}
 	if (!mysql_query(&mysql,string))
 	{
 			if (!mysql_query(&mysql,string2))

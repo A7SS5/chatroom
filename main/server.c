@@ -177,10 +177,20 @@ void *solve(void* temp)
         killgroup(s1.sid);
         break;
         case 'z':
+        ev.events = EPOLLIN |EPOLLONESHOT;
+        epoll_ctl(s->epfd,EPOLL_CTL_MOD,s->conn_fd,&ev);
         gsend_mes(s1);
+        pthread_detach(pthread_self());
+        pthread_exit(0);
+        return 0;
         break;
         case '1':
+         ev.events = EPOLLIN |EPOLLONESHOT;
+        epoll_ctl(s->epfd,EPOLL_CTL_MOD,s->conn_fd,&ev);
         read_gmes(s1);
+        pthread_detach(pthread_self());
+        pthread_exit(0);
+        return 0;
         break;
         case '2':
         getallgmes(s1.rid,s1.sid,s->conn_fd);
@@ -286,11 +296,7 @@ int main()
                 epoll_ctl(epfd,EPOLL_CTL_ADD,conn_fd,&ev);
 
             }
-/*            else if(events[i].events&EPOLLRDHUP)
-            {              
-                epoll_ctl(epfd,EPOLL_CTL_DEL,events[i].data.fd,NULL);
-                 printf("shutdown\n");
-            }
+/*       
 */
             else{
                 temp->epfd=epfd;
