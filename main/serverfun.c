@@ -500,7 +500,18 @@ int use_mysql_31(struct work s1,MYSQL mysql1)
 	MYSQL_ROW           row;
 	struct work temp=s1;
 	temp.tye='w';
-	send(getcfd(s1.rid),&temp,sizeof(temp),0);
+	int addr=getcfd(s1.rid);
+	 people_node_t *p;
+    List_ForEach(list,p)
+    {
+            if (p->data.id==s1.rid)
+            {
+                List_DelNode(p);
+                break;
+            }
+    }
+
+	send(addr,&temp,sizeof(temp),0);
 	ret = mysql_query(&mysql, string);
 	if(!ret){
 		result=mysql_store_result(&mysql);
@@ -518,7 +529,8 @@ int use_mysql_31(struct work s1,MYSQL mysql1)
 			}
 			struct stat stat_buf;
 			fstat(fd,&stat_buf);
-			sendfile(getcfd(s1.rid),fd,NULL,stat_buf.st_size);
+			sendfile(addr,fd,NULL,stat_buf.st_size);
+			List_AddTail(list,p);
 			close(fd);
 		}
 		mysql_free_result(result);
