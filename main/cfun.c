@@ -2404,7 +2404,7 @@ void sfile(int cfd)
 {
     int id;
     int fd;
-    char filename[100];
+    char filename[200];
     printf("输入你想传输的对象id号\n");
     if (scanf("%d",&id)!=1||!ismyfriend(id))
     {

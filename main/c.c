@@ -4,8 +4,8 @@
  int siliao=0;
  int qunliao=0;
  int allcansee=-1;
-//#define SERVER_ADDR     "192.168.30.121"
-#define SERVER_ADDR     "127.0.0.1"
+#define SERVER_ADDR     "192.168.30.121"
+//#define SERVER_ADDR     "127.0.0.1"
 #define SERVER_PORT     9000
  
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
