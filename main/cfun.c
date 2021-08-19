@@ -532,7 +532,7 @@ void yanzhengg(int cfd,int gid)
                 temp.ret=p->data.type;
                 printf("已发送处理请求\n");
                 send(cfd,&temp,sizeof(temp),0);
-                break;
+                return;
                 case '2':
                 temp.tye='u';
                 temp.rid=gid;
@@ -540,7 +540,7 @@ void yanzhengg(int cfd,int gid)
                 temp.ret=p->data.type;
                 printf("已发送处理请求\n");
                 send(cfd,&temp,sizeof(temp),0);
-                break;
+                return;
                 default:
                 printf("不是一个合法选项，请重新输入\n");
                 goto yanzheng2;
@@ -550,7 +550,6 @@ void yanzhengg(int cfd,int gid)
         }
         
     }
-    printf("无效的序号,输入回车继续\n");
     while(getchar()!='\n');
     
 
@@ -593,8 +592,8 @@ void yanzheng(int cfd)
                     temp.rid=myid;
                     temp.sid=p->data.sid;
                     temp.ret=p->data.type;
-                    printf("已发送处理请求\n");
                     send(cfd,&temp,sizeof(temp),0);
+                    printf("已发送处理请求\n");
                     return;
                     break;
                     case '2':
@@ -602,8 +601,8 @@ void yanzheng(int cfd)
                     temp.rid=myid;
                     temp.sid=p->data.sid;
                     temp.ret=p->data.type;
-                    printf("已发送处理请求\n");
                     send(cfd,&temp,sizeof(temp),0);
+                     printf("已发送处理请求\n");
                     return;
                     break;
                     default:

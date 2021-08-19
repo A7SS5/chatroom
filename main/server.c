@@ -113,6 +113,7 @@ void *solve(void* temp)
         getmyrequst(s1.sid);
         break;
         case 'h':
+        printf("asdadsasd\n");
         printf("i get a 'h\n");
         agree(s1);
         break;

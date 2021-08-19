@@ -923,6 +923,9 @@ int use_mysql_8(struct work temp,MYSQL mysql1)
 	sprintf(string,"insert into friend values(0,%d,%d)",temp.sid,temp.rid);
 	sprintf(string1,"insert into friend values(0,%d,%d)",temp.rid,temp.sid);
 	sprintf(string2,"delete from requst  where sid=%d and rid=%d and type=%d",temp.sid,temp.rid,temp.ret);
+	printf("%s\n",string);
+	printf("%s\n",string1);
+	printf("%s\n",string2);
 	MYSQL mysql=mysql1;
 	MYSQL_RES *result=NULL;
 	MYSQL_ROW row;
@@ -1175,18 +1178,22 @@ int use_mysql_19(struct work temp,MYSQL mysql1)
 	sprintf(string3,"select *from groupmates where gid=%d and pid=%d",temp.rid,temp.sid);
 	sprintf(string,"insert into groupmates values(%d,%d,0)",temp.rid,temp.sid);
 	sprintf(string2,"delete from grequst  where sid=%d and gid=%d and type=%d",temp.sid,temp.rid,temp.ret);
+	
+	printf("%s\n",string);
+	printf("%s\n",string2);
+	printf("%s\n",string3);
 	MYSQL mysql=mysql1;
 	MYSQL_RES *result=NULL;
 	MYSQL_ROW row;
 	int ret;
-	if (!mysql_query(&mysql,string3))
+/*	if (!mysql_query(&mysql,string3))
 	{
 		result = mysql_store_result(&mysql);
 		if(result){
 			if (!(row = mysql_fetch_row(result)))
 			{
 
-				
+				printf("nono\n");
 				mysql_free_result(result);
 				return 0;
 			}
@@ -1196,13 +1203,16 @@ int use_mysql_19(struct work temp,MYSQL mysql1)
 				printf("\n");
 		mysql_free_result(result);
 	}
+	*/
 	if (!mysql_query(&mysql,string))
 	{
 			if (!mysql_query(&mysql,string2))
 			{
 				return 1;
 			}
+			printf("nono1\n");
 	}
+	printf("nono2\n");
 	return 0;
 }
 int use_mysql_2(const char *name,MYSQL mysql1)
