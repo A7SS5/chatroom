@@ -1,0 +1,43 @@
+{
+    "files.associations": {
+        "stdio.h": "c",
+        "mysql.h": "c",
+        "pthread.h": "c",
+        "inet.h": "c",
+        "mysqlc.h": "c",
+        "string.h": "c",
+        "stdlib.h": "c",
+        "strings.h": "c",
+        "list.h": "c",
+        "c.h": "c",
+        "functional": "c",
+        "atomic": "c",
+        "*.tcc": "c",
+        "fstream": "c",
+        "sstream": "c",
+        "in.h": "c",
+        "list": "c",
+        "array": "c",
+        "initializer_list": "c",
+        "limits": "c",
+        "stop_token": "c",
+        "type_traits": "c",
+        "*.inc": "c"
+    },
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default"
+            },
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 3306,
+            "driver": "MySQL",
+            "password": "12345",
+            "username": "root",
+            "database": "try",
+            "name": "1"
+        }
+    ],
+    "C_Cpp.errorSquiggles": "Disabled"
+}
